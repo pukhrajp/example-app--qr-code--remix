@@ -7,7 +7,6 @@ import {
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2023-10";
-
 import prisma from "./db.server";
 
 const shopify = shopifyApp({
@@ -31,6 +30,10 @@ const shopify = shopifyApp({
       shopify.registerWebhooks({ session });
     },
   },
+  future: {
+    v3_webhookAdminContext: true,
+    v3_authenticatePublic: true,
+  },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
@@ -44,3 +47,4 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+

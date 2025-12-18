@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Session {
@@ -21,17 +21,88 @@ model Session {
   userId      BigInt?
 }
 
-// [START qrcode-model]
-model QRCode {
-  id               Int      @id @default(autoincrement())
-  title            String
-  shop             String
-  productId        String
-  productHandle    String
-  productVariantId String
-  destination      String
-  scans            Int      @default(0)
-  createdAt        DateTime @default(now())
+// [START cursor-models]
+// Enum for cursor categories (PostgreSQL native enum)
+enum CursorCategory {
+  PROFESSIONAL
+  FUN
+  SEASONAL
+  GAMING
+  FASHION
+  MINIMAL
+  ANIMATED
 }
 
-// [END qrcode-model]
+// Cursor model - stores both gallery cursors and custom uploaded cursors
+model Cursor {
+  id              Int              @id @default(autoincrement())
+  
+  // Ownership - null for gallery cursors, shop domain for custom uploads
+  shop            String?
+  
+  // Basic Info
+  name            String
+  description     String?
+  category        CursorCategory
+  
+  // Type identifier
+  type            String           // 'gallery' or 'custom'
+  
+  // Image URLs (using Text type for long data URIs)
+  imageUrl        String           @db.Text
+  hoverImageUrl   String?          @db.Text
+  thumbnailUrl    String?          @db.Text
+  
+  // Cursor Configuration
+  hotspotX        Int              @default(0)  // Click point X coordinate
+  hotspotY        Int              @default(0)  // Click point Y coordinate
+  
+  // Metadata
+  isActive        Boolean          @default(false)  // Currently active for a shop
+  isPublished     Boolean          @default(true)   // Show in gallery
+  
+  // Image properties
+  width           Int?             // Image width in pixels
+  height          Int?             // Image height in pixels
+  fileSize        Int?             // File size in bytes
+  
+  // Timestamps
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relations
+  cursorSettings  CursorSettings[]
+  
+  // Indexes for performance
+  @@index([shop])
+  @@index([category])
+  @@index([type])
+  @@index([isPublished])
+}
+
+// CursorSettings model - stores per-shop cursor configuration
+model CursorSettings {
+  id              Int       @id @default(autoincrement())
+  
+  // Shop identifier (unique per shop)
+  shop            String    @unique
+  
+  // Active cursor reference
+  activeCursorId  Int?
+  activeCursor    Cursor?   @relation(fields: [activeCursorId], references: [id], onDelete: SetNull)
+  
+  // App state
+  isEnabled       Boolean   @default(true)  // App on/off toggle
+  
+  // Additional settings (stored as JSON for flexibility)
+  settings        String?   @db.Text  // JSON string: { cursorSize: 100, showOnMobile: false, etc. }
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Index for fast shop lookups
+  @@index([shop])
+  @@index([activeCursorId])
+}
+// [END cursor-models]
