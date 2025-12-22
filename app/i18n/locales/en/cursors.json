@@ -1,0 +1,82 @@
+{
+  "page": {
+    "title": "Custom Cursor"
+  },
+  "banner": {
+    "error": {
+      "title": "Error",
+      "default": "An unexpected error occurred. Please try again."
+    },
+    "disabled": {
+      "title": "Custom cursor is currently disabled",
+      "description": "Your custom cursor settings are saved but not active on your storefront. Enable it to show the custom cursor to your customers.",
+      "action": "Enable cursor"
+    }
+  },
+  "buttons": {
+    "save": "Save & Publish",
+    "reset": "Reset to default",
+    "enable": "Enable",
+    "disable": "Disable"
+  },
+  "preview": {
+    "title": "Cursor Preview",
+    "empty": {
+      "heading": "Select a cursor from the gallery",
+      "description": "Click any cursor on the left to see a preview here"
+    },
+    "instructions": "✨ Hover over this area to see your custom cursor in action!",
+    "currentSize": "Current size: {{size}}px ({{percentage}}%)"
+  },
+  "settings": {
+    "title": "Cursor Settings",
+    "appStatus": {
+      "label": "App Status",
+      "enabled": "Your custom cursor is active and will be displayed on your storefront.",
+      "disabled": "Your custom cursor is disabled. Click \"Enable\" above to activate it."
+    },
+    "size": {
+      "label": "Cursor Size",
+      "current": "{{size}}px ({{percentage}}%)",
+      "help": "Adjust the size of your custom cursor (16px - 64px)"
+    }
+  },
+  "tabs": {
+    "gallery": "Cursor gallery",
+    "upload": "Upload your own"
+  },
+  "categories": {
+    "professional": "Professional",
+    "fun": "Fun",
+    "seasonal": "Seasonal",
+    "gaming": "Gaming",
+    "fashion": "Fashion",
+    "minimal": "Minimal",
+    "animated": "Animated"
+  },
+  "empty": {
+    "gallery": {
+      "title": "No cursors uploaded yet",
+      "description": "Start by adding cursors to your gallery."
+    },
+    "upload": {
+      "title": "Upload your own cursor",
+      "description": "Coming soon! You'll be able to upload custom cursor images here."
+    }
+  },
+  "toast": {
+    "success": "Cursor published successfully",
+    "reset": "Cursor reset to default",
+    "error": "Failed to save cursor settings. Please try again.",
+    "enableSuccess": "Custom cursor enabled",
+    "disableSuccess": "Custom cursor disabled"
+  },
+  "aria": {
+    "saveButton": "Save and publish {{name}} cursor with size {{size}}px",
+    "resetButton": "Reset all cursor settings to default values",
+    "selectCursor": "Select {{name}} cursor{{status}}",
+    "previewRegion": "Preview of {{name}} cursor at {{size}}px",
+    "previewEmpty": "Cursor preview - no cursor selected"
+  }
+}
+

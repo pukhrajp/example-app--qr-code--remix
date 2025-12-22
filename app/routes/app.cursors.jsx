@@ -1,6 +1,7 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit, useNavigation, useActionData } from "@remix-run/react";
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Page,
   Layout,
@@ -209,6 +210,7 @@ export async function action({ request }) {
 // ============================================================================
 
 export default function CursorsPage() {
+  const { t } = useTranslation('cursors');
   const loaderData = useLoaderData();
   const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize, isEnabled: savedIsEnabled, error } = loaderData;
   const submit = useSubmit();
@@ -319,7 +321,7 @@ export default function CursorsPage() {
   }, [selectedCursorId, cursorSize, isEnabled, submit]);
 
   return (
-    <Page title="Custom Cursor">
+    <Page title={t('page.title')}>
       {/* Error Banner */}
       {(error || (actionData && !actionData.success)) && (
         <Box paddingBlockEnd="400">

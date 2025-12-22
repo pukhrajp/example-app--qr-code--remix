@@ -5,6 +5,7 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 
 import { authenticate } from "../shopify.server";
+import { I18nProvider } from "../i18n/I18nProvider";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
@@ -19,7 +20,9 @@ export default function App() {
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <Outlet />
+      <I18nProvider>
+        <Outlet />
+      </I18nProvider>
     </AppProvider>
   );
 }
