@@ -386,7 +386,7 @@ export default function CursorsPage() {
             onClick={handleResetToDefault}
             accessibilityLabel="Reset all cursor settings to default values"
           >
-            Reset to default
+            {t('buttons.reset')}
           </Button>
 
           {/* Right: Save & Publish Button */}
@@ -397,7 +397,7 @@ export default function CursorsPage() {
             onClick={handleSaveAndPublish}
             accessibilityLabel={`Save and publish ${selectedCursor ? selectedCursor.name : 'default'} cursor with size ${cursorSize}px`}
           >
-            Save & Publish
+            {t('buttons.save')}
           </Button>
         </InlineStack>
       </Box>
@@ -659,6 +659,8 @@ function UploadTabContent() {
 // ============================================================================
 
 function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnabled, onToggleEnabled }) {
+  const { t } = useTranslation('cursors');
+  
   // Format category name: PROFESSIONAL -> Professional
   const formatCategoryName = (cat) => {
     return cat
@@ -726,7 +728,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
                 onClick={() => onToggleEnabled(!isEnabled)}
                 size="slim"
               >
-                {isEnabled ? 'Enabled' : 'Disabled'}
+                {isEnabled ? t('buttons.enable') : t('buttons.disable')}
               </Button>
             </div>
             <Text as="p" variant="bodySm" tone="subdued">
