@@ -386,7 +386,7 @@ export default function CursorsPage() {
             tone="critical"
             disabled={!hasUnsavedChanges || isLoading}
             onClick={handleResetToDefault}
-            accessibilityLabel="Reset all cursor settings to default values"
+            accessibilityLabel={t('aria.resetButton')}
           >
             {t('buttons.reset')}
           </Button>
@@ -397,7 +397,10 @@ export default function CursorsPage() {
             disabled={!hasUnsavedChanges || isLoading}
             loading={isLoading}
             onClick={handleSaveAndPublish}
-            accessibilityLabel={`Save and publish ${selectedCursor ? selectedCursor.name : 'default'} cursor with size ${cursorSize}px`}
+            accessibilityLabel={t('aria.saveButton', { 
+              name: selectedCursor ? selectedCursor.name : 'default',
+              size: cursorSize 
+            })}
           >
             {t('buttons.save')}
           </Button>
@@ -555,7 +558,10 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
     <div
       role="button"
       tabIndex={0}
-      aria-label={`Select ${cursor.name} cursor${isSelected ? ' (currently selected)' : ''}`}
+      aria-label={t('aria.selectCursor', { 
+        name: cursor.name, 
+        status: isSelected ? ' (currently selected)' : '' 
+      })}
       aria-pressed={isSelected}
       onClick={onClick}
       onKeyDown={handleKeyDown}
