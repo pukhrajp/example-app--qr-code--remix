@@ -268,17 +268,19 @@ export default function CursorsPage() {
   // ========================================================================
   useEffect(() => {
     // After successful save, sync selected cursor with active cursor from DB
+    // Only runs when activeCursorId or actionData changes (not when user selects)
     if (actionData?.success && activeCursorId !== selectedCursorId) {
       setSelectedCursorId(activeCursorId);
     }
-  }, [activeCursorId, actionData, selectedCursorId]);
+  }, [activeCursorId, actionData]); // Removed selectedCursorId to prevent blocking user selections
 
   useEffect(() => {
     // After successful save, sync cursor size with saved value from DB
+    // Only runs when savedCursorSize or actionData changes (not when user adjusts slider)
     if (actionData?.success && savedCursorSize !== cursorSize) {
       setCursorSize(savedCursorSize);
     }
-  }, [savedCursorSize, actionData, cursorSize]);
+  }, [savedCursorSize, actionData]); // Removed cursorSize to prevent blocking user adjustments
 
   // ========================================================================
   // CURSOR SELECTION HANDLER (Task 6B)
@@ -681,7 +683,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
             alignItems: 'center' 
           }}>
             <Text as="h2" variant="headingMd">
-              Cursor Preview
+              {t('preview.title')}
             </Text>
             {selectedCursor && (
               <Badge tone="info">{formatCategoryName(selectedCursor.category)}</Badge>
@@ -774,6 +776,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
 // ============================================================================
 
 function PreviewBox({ selectedCursor, cursorSize }) {
+  const { t } = useTranslation('cursors');
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -789,7 +792,7 @@ function PreviewBox({ selectedCursor, cursorSize }) {
   return (
     <div
       role="region"
-      aria-label={selectedCursor ? `Preview of ${selectedCursor.name} cursor at ${cursorSize}px` : 'Cursor preview - no cursor selected'}
+      aria-label={selectedCursor ? t('aria.previewRegion', { name: selectedCursor.name, size: cursorSize }) : t('aria.previewEmpty')}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
@@ -826,14 +829,14 @@ function PreviewBox({ selectedCursor, cursorSize }) {
             />
           </div>
 
-          {/* Preview Instructions (Task 8 - Shows Size) */}
+          {/* Preview Instructions */}
           <Box paddingBlockStart="400">
             <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-              ✨ Hover over this area to see your custom cursor in action!
+              {t('preview.instructions')}
             </Text>
             <Box paddingBlockStart="100">
               <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-                Current size: {cursorSize}px ({Math.round((cursorSize / 32) * 100)}%)
+                {t('preview.currentSize', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
               </Text>
             </Box>
           </Box>
@@ -894,10 +897,10 @@ function PreviewBox({ selectedCursor, cursorSize }) {
             </svg>
           </div>
           <Text as="p" variant="bodyMd" alignment="center" tone="subdued">
-            Select a cursor from the gallery
+            {t('preview.empty.heading')}
           </Text>
           <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-            Click any cursor on the left to see a preview here
+            {t('preview.empty.description')}
           </Text>
         </BlockStack>
       )}
