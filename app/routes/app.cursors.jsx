@@ -26,66 +26,84 @@ import db from "../db.server";
 // ============================================================================
 
 export async function loader({ request }) {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
+  try {
+    const { session } = await authenticate.admin(request);
+    const shop = session.shop;
 
-  // Fetch all published cursors from database
-  const cursors = await db.cursor.findMany({
-    where: {
-      isPublished: true,
-    },
-    orderBy: [
-      { category: 'asc' },
-      { name: 'asc' },
-    ],
-  });
-
-  // Group cursors by category
-  const cursorsByCategory = cursors.reduce((acc, cursor) => {
-    if (!acc[cursor.category]) {
-      acc[cursor.category] = [];
-    }
-    acc[cursor.category].push(cursor);
-    return acc;
-  }, {});
-
-  // Get or create cursor settings for this shop
-  let cursorSettings = await db.cursorSettings.findUnique({
-    where: { shop },
-    include: {
-      activeCursor: true,
-    },
-  });
-
-  // If no settings exist, create default settings
-  if (!cursorSettings) {
-    cursorSettings = await db.cursorSettings.create({
-      data: {
-        shop,
-        isEnabled: true,
-        settings: JSON.stringify({ cursorSize: 32 }), // Default cursor size (Task 9)
+    // Fetch all published cursors from database
+    const cursors = await db.cursor.findMany({
+      where: {
+        isPublished: true,
       },
+      orderBy: [
+        { category: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    // Group cursors by category
+    const cursorsByCategory = cursors.reduce((acc, cursor) => {
+      if (!acc[cursor.category]) {
+        acc[cursor.category] = [];
+      }
+      acc[cursor.category].push(cursor);
+      return acc;
+    }, {});
+
+    // Get or create cursor settings for this shop
+    let cursorSettings = await db.cursorSettings.findUnique({
+      where: { shop },
       include: {
         activeCursor: true,
       },
     });
+
+    // If no settings exist, create default settings
+    if (!cursorSettings) {
+      cursorSettings = await db.cursorSettings.create({
+        data: {
+          shop,
+          isEnabled: true,
+          settings: JSON.stringify({ cursorSize: 32 }),
+        },
+        include: {
+          activeCursor: true,
+        },
+      });
+    }
+
+    // Parse settings JSON safely
+    let settings = { cursorSize: 32 };
+    try {
+      settings = typeof cursorSettings.settings === 'string'
+        ? JSON.parse(cursorSettings.settings)
+        : (cursorSettings.settings || { cursorSize: 32 });
+    } catch (parseError) {
+      console.error('Error parsing cursor settings:', parseError);
+    }
+    
+    const savedCursorSize = settings.cursorSize || 32;
+
+    return json({
+      cursorsByCategory,
+      cursors,
+      activeCursorId: cursorSettings.activeCursorId,
+      activeCursor: cursorSettings.activeCursor,
+      savedCursorSize,
+      isEnabled: cursorSettings.isEnabled,
+    });
+  } catch (error) {
+    console.error('Error loading cursor data:', error);
+    return json({
+      cursorsByCategory: {},
+      cursors: [],
+      activeCursorId: null,
+      activeCursor: null,
+      savedCursorSize: 32,
+      isEnabled: true,
+      error: 'Failed to load cursor data',
+    }, { status: 500 });
   }
-
-  // Parse settings JSON (Task 9)
-  // Prisma may return JSON as string or object depending on database
-  const settings = typeof cursorSettings.settings === 'string'
-    ? JSON.parse(cursorSettings.settings)
-    : (cursorSettings.settings || {});
-  const savedCursorSize = settings.cursorSize || 32; // Default to 32px
-
-  return json({
-    cursorsByCategory,
-    cursors,
-    activeCursorId: cursorSettings.activeCursorId,
-    activeCursor: cursorSettings.activeCursor,
-    savedCursorSize, // Task 9
-    isEnabled: cursorSettings.isEnabled, // Task 12
-  });
 }
 
 // ============================================================================
@@ -93,70 +111,97 @@ export async function loader({ request }) {
 // ============================================================================
 
 export async function action({ request }) {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
+  try {
+    const { session } = await authenticate.admin(request);
+    const shop = session.shop;
 
-  const formData = await request.formData();
-  const action = formData.get('action');
+    const formData = await request.formData();
+    const action = formData.get('action');
 
-  if (action === 'setActiveCursor') {
-    const cursorIdRaw = formData.get('cursorId');
-    const cursorSizeRaw = formData.get('cursorSize'); // Task 9
-    const isEnabledRaw = formData.get('isEnabled'); // Task 12
-    
-    // Handle null/empty (reset to default) - Task 6F
-    const cursorId = cursorIdRaw && cursorIdRaw !== '' 
-      ? parseInt(cursorIdRaw, 10) 
-      : null;
+    if (action === 'setActiveCursor') {
+      const cursorIdRaw = formData.get('cursorId');
+      const cursorSizeRaw = formData.get('cursorSize');
+      const isEnabledRaw = formData.get('isEnabled');
+      
+      // Handle null/empty (reset to default)
+      const cursorId = cursorIdRaw && cursorIdRaw !== '' 
+        ? parseInt(cursorIdRaw, 10) 
+        : null;
 
-    // Parse cursor size (Task 9)
-    const cursorSize = cursorSizeRaw ? parseInt(cursorSizeRaw, 10) : 32;
+      // Validate cursor size range
+      const cursorSize = cursorSizeRaw ? parseInt(cursorSizeRaw, 10) : 32;
+      if (cursorSize < 16 || cursorSize > 64) {
+        return json({ 
+          success: false, 
+          message: 'Cursor size must be between 16px and 64px' 
+        });
+      }
 
-    // Parse isEnabled (Task 12)
-    const isEnabled = isEnabledRaw === 'true';
+      // Parse isEnabled
+      const isEnabled = isEnabledRaw === 'true';
 
-    // Get existing settings to preserve other values (Task 9)
-    const existingSettings = await db.cursorSettings.findUnique({
-      where: { shop },
-    });
+      // If cursorId is provided, validate it exists
+      if (cursorId) {
+        const cursorExists = await db.cursor.findUnique({
+          where: { id: cursorId },
+        });
 
-    // Parse existing settings (Prisma returns JSON as object)
-    const currentSettings = typeof existingSettings?.settings === 'string'
-      ? JSON.parse(existingSettings.settings)
-      : (existingSettings?.settings || {});
-    
-    const newSettings = {
-      ...currentSettings,
-      cursorSize, // Update cursor size (Task 9)
-    };
+        if (!cursorExists) {
+          return json({ 
+            success: false, 
+            message: 'Selected cursor not found' 
+          });
+        }
+      }
 
-    // Update or create cursor settings (Task 6E-6F-9-12)
-    // Note: Prisma Json fields expect stringified JSON
-    await db.cursorSettings.upsert({
-      where: { shop },
-      update: {
-        activeCursorId: cursorId,
-        isEnabled, // Task 12
-        settings: JSON.stringify(newSettings), // Stringify for JSON field
-      },
-      create: {
-        shop,
-        activeCursorId: cursorId,
-        isEnabled, // Task 12
-        settings: JSON.stringify(newSettings), // Stringify for JSON field
-      },
-    });
+      // Get existing settings to preserve other values
+      const existingSettings = await db.cursorSettings.findUnique({
+        where: { shop },
+      });
+
+      // Parse existing settings (Prisma returns JSON as object)
+      const currentSettings = typeof existingSettings?.settings === 'string'
+        ? JSON.parse(existingSettings.settings)
+        : (existingSettings?.settings || {});
+      
+      const newSettings = {
+        ...currentSettings,
+        cursorSize,
+      };
+
+      // Update or create cursor settings
+      await db.cursorSettings.upsert({
+        where: { shop },
+        update: {
+          activeCursorId: cursorId,
+          isEnabled,
+          settings: JSON.stringify(newSettings),
+        },
+        create: {
+          shop,
+          activeCursorId: cursorId,
+          isEnabled,
+          settings: JSON.stringify(newSettings),
+        },
+      });
+
+      return json({ 
+        success: true, 
+        message: cursorId ? 'Cursor published successfully' : 'Cursor reset to default' 
+      });
+    }
 
     return json({ 
-      success: true, 
-      message: cursorId ? 'Cursor published successfully' : 'Cursor reset to default' 
+      success: false, 
+      message: 'Invalid action' 
     });
+  } catch (error) {
+    console.error('Error saving cursor settings:', error);
+    return json({ 
+      success: false, 
+      message: 'Failed to save cursor settings. Please try again.' 
+    }, { status: 500 });
   }
-
-  return json({ 
-    success: false, 
-    message: 'Failed to save cursor' 
-  });
 }
 
 // ============================================================================
@@ -164,7 +209,8 @@ export async function action({ request }) {
 // ============================================================================
 
 export default function CursorsPage() {
-  const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize, isEnabled: savedIsEnabled } = useLoaderData();
+  const loaderData = useLoaderData();
+  const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize, isEnabled: savedIsEnabled, error } = loaderData;
   const submit = useSubmit();
   const navigation = useNavigation();
   const actionData = useActionData();
@@ -212,7 +258,6 @@ export default function CursorsPage() {
       shopify.toast.show(actionData.message || "Cursor published successfully", {
         duration: 3000,
       });
-      console.log('✅ Cursor saved to database!');
     }
   }, [actionData]);
 
@@ -222,33 +267,16 @@ export default function CursorsPage() {
   useEffect(() => {
     // After successful save, sync selected cursor with active cursor from DB
     if (actionData?.success && activeCursorId !== selectedCursorId) {
-      console.log('🔄 Syncing selected cursor with database after save');
       setSelectedCursorId(activeCursorId);
     }
-  }, [activeCursorId, actionData]);
+  }, [activeCursorId, actionData, selectedCursorId]);
 
   useEffect(() => {
-    // After successful save, sync cursor size with saved value from DB (Task 9)
+    // After successful save, sync cursor size with saved value from DB
     if (actionData?.success && savedCursorSize !== cursorSize) {
-      console.log('🔄 Syncing cursor size with database after save');
       setCursorSize(savedCursorSize);
     }
-  }, [savedCursorSize, actionData]);
-
-  // Debug logging (Tasks 6A-6B-9)
-  useEffect(() => {
-    console.log('=== Cursor State (Task 9) ===');
-    console.log('Active Cursor ID (from DB):', activeCursorId);
-    console.log('Selected Cursor ID (React state):', selectedCursorId);
-    console.log('Selected Cursor Object:', selectedCursor);
-    console.log('Saved Cursor Size (from DB):', savedCursorSize);
-    console.log('Current Cursor Size (React state):', cursorSize);
-    console.log('Cursor Changed:', selectedCursorId !== activeCursorId);
-    console.log('Size Changed:', cursorSize !== savedCursorSize);
-    console.log('Has Unsaved Changes:', selectedCursorId !== activeCursorId || cursorSize !== savedCursorSize);
-    console.log('Is Loading:', isLoading);
-    console.log('================================');
-  }, [selectedCursorId, activeCursorId, selectedCursor, cursorSize, savedCursorSize, isLoading]);
+  }, [savedCursorSize, actionData, cursorSize]);
 
   // ========================================================================
   // CURSOR SELECTION HANDLER (Task 6B)
@@ -256,7 +284,6 @@ export default function CursorsPage() {
   // Updates React state only - NO database write until "Save & Publish"
   // ========================================================================
   const handleCursorSelect = useCallback((cursorId) => {
-    console.log('👉 Cursor selected (preview mode):', cursorId);
     setSelectedCursorId(cursorId);
   }, []);
 
@@ -273,29 +300,40 @@ export default function CursorsPage() {
   // RESET TO DEFAULT HANDLER (Task 6F)
   // ========================================================================
   const handleResetToDefault = useCallback(() => {
-    console.log('🔄 Reset to default - clearing cursor selection');
     setSelectedCursorId(null);
+    setCursorSize(32);
+    setIsEnabled(true);
   }, []);
 
   // ========================================================================
   // SAVE & PUBLISH HANDLER (Task 6E-9-12)
   // ========================================================================
   const handleSaveAndPublish = useCallback(() => {
-    console.log('💾 Saving cursor to database:', selectedCursorId, 'Size:', cursorSize, 'Enabled:', isEnabled);
-    
     const formData = new FormData();
     formData.append('action', 'setActiveCursor');
     formData.append('cursorId', selectedCursorId || ''); // Handle null
-    formData.append('cursorSize', cursorSize); // Task 9
-    formData.append('isEnabled', isEnabled.toString()); // Task 12
+    formData.append('cursorSize', cursorSize);
+    formData.append('isEnabled', isEnabled.toString());
     
     submit(formData, { method: 'post' });
   }, [selectedCursorId, cursorSize, isEnabled, submit]);
 
   return (
     <Page title="Custom Cursor">
-      {/* Enable/Disable Banner (Task 12) */}
-      {!isEnabled && (
+      {/* Error Banner */}
+      {(error || (actionData && !actionData.success)) && (
+        <Box paddingBlockEnd="400">
+          <Banner
+            title="Error"
+            tone="critical"
+          >
+            <p>{error || actionData?.message || 'An unexpected error occurred. Please try again.'}</p>
+          </Banner>
+        </Box>
+      )}
+
+      {/* Enable/Disable Banner */}
+      {!isEnabled && !error && (
         <Box paddingBlockEnd="400">
           <Banner
             title="Custom cursor is currently disabled"
@@ -336,14 +374,15 @@ export default function CursorsPage() {
         </Layout.Section>
       </Layout>
 
-      {/* ACTION BUTTONS (Task 6D-6E-6F) */}
+      {/* ACTION BUTTONS */}
       <Box paddingBlockStart="400">
         <InlineStack align="space-between">
           {/* Left: Reset Button */}
           <Button
             tone="critical"
-            disabled={selectedCursorId === null || isLoading}
+            disabled={!hasUnsavedChanges || isLoading}
             onClick={handleResetToDefault}
+            accessibilityLabel="Reset all cursor settings to default values"
           >
             Reset to default
           </Button>
@@ -354,6 +393,7 @@ export default function CursorsPage() {
             disabled={!hasUnsavedChanges || isLoading}
             loading={isLoading}
             onClick={handleSaveAndPublish}
+            accessibilityLabel={`Save and publish ${selectedCursor ? selectedCursor.name : 'default'} cursor with size ${cursorSize}px`}
           >
             Save & Publish
           </Button>
@@ -445,11 +485,19 @@ function GalleryTabContent({ cursorsByCategory, cursors, selectedCursorId, onCur
 // ============================================================================
 
 function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSelect, cursorSize }) {
+  // Format category name: PROFESSIONAL -> Professional
+  const formatCategoryName = (cat) => {
+    return cat
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
     <BlockStack gap="400">
       {/* Category Header */}
       <Text as="h3" variant="headingSm" fontWeight="semibold">
-        {category.replace(/_/g, ' ')}
+        {formatCategoryName(category)}
       </Text>
 
       {/* Cursor Grid */}
@@ -482,7 +530,6 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  // Track mouse position for hover preview (Task 10)
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setMousePosition({
@@ -491,9 +538,21 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
     });
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Select ${cursor.name} cursor${isSelected ? ' (currently selected)' : ''}`}
+      aria-pressed={isSelected}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
@@ -502,7 +561,7 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
         borderRadius: '8px',
         padding: '12px',
         textAlign: 'center',
-        cursor: isHovering ? 'none' : 'pointer', // Hide default cursor on hover (Task 10)
+        cursor: isHovering ? 'none' : 'pointer',
         transition: 'all 0.2s ease',
         backgroundColor: isSelected ? '#F6F6F7' : '#fff',
         position: 'relative',
@@ -598,6 +657,14 @@ function UploadTabContent() {
 // ============================================================================
 
 function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnabled, onToggleEnabled }) {
+  // Format category name: PROFESSIONAL -> Professional
+  const formatCategoryName = (cat) => {
+    return cat
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   return (
     <BlockStack gap="400">
       {/* Preview Card */}
@@ -613,7 +680,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               Cursor Preview
             </Text>
             {selectedCursor && (
-              <Badge tone="info">{selectedCursor.category.replace(/_/g, ' ')}</Badge>
+              <Badge tone="info">{formatCategoryName(selectedCursor.category)}</Badge>
             )}
           </div>
 
@@ -678,7 +745,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               </Text>
             </div>
             <RangeSlider
-              label="Cursor size"
+              label={`Cursor size: ${cursorSize}px (${Math.round((cursorSize / 32) * 100)}%)`}
               labelHidden
               value={cursorSize}
               onChange={onCursorSizeChange}
@@ -686,6 +753,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               max={64}
               step={1}
               output
+              helpText={`Adjust the size of your custom cursor between 16px and 64px. Current size: ${cursorSize}px`}
             />
             <Text as="p" variant="bodySm" tone="subdued">
               Adjust the size of your custom cursor (16px - 64px)
@@ -716,6 +784,8 @@ function PreviewBox({ selectedCursor, cursorSize }) {
 
   return (
     <div
+      role="region"
+      aria-label={selectedCursor ? `Preview of ${selectedCursor.name} cursor at ${cursorSize}px` : 'Cursor preview - no cursor selected'}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
@@ -733,7 +803,7 @@ function PreviewBox({ selectedCursor, cursorSize }) {
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.2s ease',
-        cursor: selectedCursor && isHovering ? 'none' : 'default', // Hide default cursor (Task 8A)
+        cursor: selectedCursor && isHovering ? 'none' : 'default',
       }}
     >
       {selectedCursor ? (
