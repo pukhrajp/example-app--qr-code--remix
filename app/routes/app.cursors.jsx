@@ -412,6 +412,7 @@ export default function CursorsPage() {
 // ============================================================================
 
 function CursorGalleryPanel({ cursorsByCategory, cursors, selectedCursorId, onCursorSelect, cursorSize }) {
+  const { t } = useTranslation('cursors');
   const [selectedTab, setSelectedTab] = useState(0);
 
   const handleTabChange = useCallback((selectedTabIndex) => {
@@ -421,11 +422,11 @@ function CursorGalleryPanel({ cursorsByCategory, cursors, selectedCursorId, onCu
   const tabs = [
     {
       id: 'gallery',
-      content: 'Cursor gallery',
+      content: t('tabs.gallery'),
     },
     {
       id: 'upload',
-      content: 'Upload your own',
+      content: t('tabs.upload'),
     },
   ];
 
@@ -458,10 +459,10 @@ function GalleryTabContent({ cursorsByCategory, cursors, selectedCursorId, onCur
   if (cursors.length === 0) {
     return (
       <EmptyState
-        heading="No cursors uploaded yet"
+        heading={t('empty.gallery.title')}
         image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
       >
-        <p>Start by adding cursors to your gallery.</p>
+        <p>{t('empty.gallery.description')}</p>
       </EmptyState>
     );
   }
@@ -531,6 +532,7 @@ function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSe
 // ============================================================================
 
 function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
+  const { t } = useTranslation('cursors');
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -572,7 +574,7 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
         boxShadow: isHovering && !isSelected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
       }}
     >
-      {/* Selected Badge (Task 6B - Preview Mode) */}
+      {/* Selected Badge */}
       {isSelected && (
         <div
           style={{
@@ -584,7 +586,7 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
           <Badge tone="info">
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Icon source={CheckSmallIcon} tone="info" />
-              Selected
+              {t('badge.selected')}
             </div>
           </Badge>
         </div>
@@ -646,12 +648,14 @@ function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
 // ============================================================================
 
 function UploadTabContent() {
+  const { t } = useTranslation('cursors');
+  
   return (
     <EmptyState
-      heading="Upload your own cursor"
+      heading={t('empty.upload.title')}
       image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
     >
-      <p>Coming soon! You'll be able to upload custom cursor images here.</p>
+      <p>{t('empty.upload.description')}</p>
     </EmptyState>
   );
 }

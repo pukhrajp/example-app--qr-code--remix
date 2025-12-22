@@ -54,6 +54,9 @@
     "minimal": "Minimal",
     "animated": "Animated"
   },
+  "badge": {
+    "selected": "Selected"
+  },
   "empty": {
     "gallery": {
       "title": "No cursors uploaded yet",
