@@ -134,7 +134,7 @@ export async function action({ request }) {
       if (cursorSize < 16 || cursorSize > 64) {
         return json({ 
           success: false, 
-          message: 'Cursor size must be between 16px and 64px' 
+          messageKey: 'errors:sizeRange'
         });
       }
 
@@ -150,7 +150,7 @@ export async function action({ request }) {
         if (!cursorExists) {
           return json({ 
             success: false, 
-            message: 'Selected cursor not found' 
+            messageKey: 'errors:notFound'
           });
         }
       }
@@ -188,19 +188,19 @@ export async function action({ request }) {
 
       return json({ 
         success: true, 
-        message: cursorId ? 'Cursor published successfully' : 'Cursor reset to default' 
+        messageKey: cursorId ? 'cursors:toast.success' : 'cursors:toast.reset'
       });
     }
 
     return json({ 
       success: false, 
-      message: 'Invalid action' 
+      messageKey: 'errors:invalidAction'
     });
   } catch (error) {
     console.error('Error saving cursor settings:', error);
     return json({ 
       success: false, 
-      message: 'Failed to save cursor settings. Please try again.' 
+      messageKey: 'errors:saveFailed'
     }, { status: 500 });
   }
 }
@@ -253,15 +253,30 @@ export default function CursorsPage() {
   const isLoading = navigation.state === "submitting" || navigation.state === "loading";
 
   // ========================================================================
-  // TOAST NOTIFICATION (Task 6E)
+  // TOAST NOTIFICATION WITH i18n
   // ========================================================================
   useEffect(() => {
     if (actionData?.success) {
-      shopify.toast.show(actionData.message || "Cursor published successfully", {
+      const messageKey = actionData.messageKey || 'cursors:toast.success';
+      const [namespace, key] = messageKey.includes(':') 
+        ? messageKey.split(':') 
+        : ['cursors', messageKey];
+      
+      shopify.toast.show(t(key, { ns: namespace }), {
         duration: 3000,
       });
+    } else if (actionData?.success === false && actionData?.messageKey) {
+      // Show error toast for failures
+      const [namespace, key] = actionData.messageKey.includes(':')
+        ? actionData.messageKey.split(':')
+        : ['cursors', actionData.messageKey];
+      
+      shopify.toast.show(t(key, { ns: namespace }), {
+        duration: 5000,
+        isError: true,
+      });
     }
-  }, [actionData]);
+  }, [actionData, t]);
 
   // ========================================================================
   // SYNC SELECTED WITH ACTIVE AFTER SAVE (Task 6E-9)
