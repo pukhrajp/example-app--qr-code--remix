@@ -15,6 +15,7 @@ import {
   Button,
   InlineStack,
   RangeSlider,
+  Banner,
 } from "@shopify/polaris";
 import { CheckSmallIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
@@ -83,6 +84,7 @@ export async function loader({ request }) {
     activeCursorId: cursorSettings.activeCursorId,
     activeCursor: cursorSettings.activeCursor,
     savedCursorSize, // Task 9
+    isEnabled: cursorSettings.isEnabled, // Task 12
   });
 }
 
@@ -100,6 +102,7 @@ export async function action({ request }) {
   if (action === 'setActiveCursor') {
     const cursorIdRaw = formData.get('cursorId');
     const cursorSizeRaw = formData.get('cursorSize'); // Task 9
+    const isEnabledRaw = formData.get('isEnabled'); // Task 12
     
     // Handle null/empty (reset to default) - Task 6F
     const cursorId = cursorIdRaw && cursorIdRaw !== '' 
@@ -108,6 +111,9 @@ export async function action({ request }) {
 
     // Parse cursor size (Task 9)
     const cursorSize = cursorSizeRaw ? parseInt(cursorSizeRaw, 10) : 32;
+
+    // Parse isEnabled (Task 12)
+    const isEnabled = isEnabledRaw === 'true';
 
     // Get existing settings to preserve other values (Task 9)
     const existingSettings = await db.cursorSettings.findUnique({
@@ -124,18 +130,19 @@ export async function action({ request }) {
       cursorSize, // Update cursor size (Task 9)
     };
 
-    // Update or create cursor settings (Task 6E-6F-9)
+    // Update or create cursor settings (Task 6E-6F-9-12)
     // Note: Prisma Json fields expect stringified JSON
     await db.cursorSettings.upsert({
       where: { shop },
       update: {
         activeCursorId: cursorId,
+        isEnabled, // Task 12
         settings: JSON.stringify(newSettings), // Stringify for JSON field
       },
       create: {
         shop,
         activeCursorId: cursorId,
-        isEnabled: true,
+        isEnabled, // Task 12
         settings: JSON.stringify(newSettings), // Stringify for JSON field
       },
     });
@@ -157,7 +164,7 @@ export async function action({ request }) {
 // ============================================================================
 
 export default function CursorsPage() {
-  const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize } = useLoaderData();
+  const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize, isEnabled: savedIsEnabled } = useLoaderData();
   const submit = useSubmit();
   const navigation = useNavigation();
   const actionData = useActionData();
@@ -184,6 +191,13 @@ export default function CursorsPage() {
   // Initialize with saved value from database (Task 9)
   // ========================================================================
   const [cursorSize, setCursorSize] = useState(savedCursorSize);
+
+  // ========================================================================
+  // ENABLE/DISABLE STATE (Task 12)
+  // ========================================================================
+  // Controls whether custom cursor is active on storefront
+  // ========================================================================
+  const [isEnabled, setIsEnabled] = useState(savedIsEnabled);
 
   // ========================================================================
   // LOADING STATE (Task 6E)
@@ -247,12 +261,13 @@ export default function CursorsPage() {
   }, []);
 
   // ========================================================================
-  // UNSAVED CHANGES DETECTION (Task 6D-9)
+  // UNSAVED CHANGES DETECTION (Task 6D-9-12)
   // ========================================================================
-  // Check both cursor selection AND cursor size changes
+  // Check cursor selection, cursor size, AND enabled state changes
   const hasUnsavedChanges = 
     selectedCursorId !== activeCursorId || 
-    cursorSize !== savedCursorSize;
+    cursorSize !== savedCursorSize ||
+    isEnabled !== savedIsEnabled;
 
   // ========================================================================
   // RESET TO DEFAULT HANDLER (Task 6F)
@@ -263,21 +278,40 @@ export default function CursorsPage() {
   }, []);
 
   // ========================================================================
-  // SAVE & PUBLISH HANDLER (Task 6E-9)
+  // SAVE & PUBLISH HANDLER (Task 6E-9-12)
   // ========================================================================
   const handleSaveAndPublish = useCallback(() => {
-    console.log('💾 Saving cursor to database:', selectedCursorId, 'Size:', cursorSize);
+    console.log('💾 Saving cursor to database:', selectedCursorId, 'Size:', cursorSize, 'Enabled:', isEnabled);
     
     const formData = new FormData();
     formData.append('action', 'setActiveCursor');
     formData.append('cursorId', selectedCursorId || ''); // Handle null
     formData.append('cursorSize', cursorSize); // Task 9
+    formData.append('isEnabled', isEnabled.toString()); // Task 12
     
     submit(formData, { method: 'post' });
-  }, [selectedCursorId, cursorSize, submit]);
+  }, [selectedCursorId, cursorSize, isEnabled, submit]);
 
   return (
     <Page title="Custom Cursor">
+      {/* Enable/Disable Banner (Task 12) */}
+      {!isEnabled && (
+        <Box paddingBlockEnd="400">
+          <Banner
+            title="Custom cursor is currently disabled"
+            tone="warning"
+            action={{
+              content: 'Enable cursor',
+              onAction: () => {
+                setIsEnabled(true);
+              },
+            }}
+          >
+            <p>Your custom cursor settings are saved but not active on your storefront. Enable it to show the custom cursor to your customers.</p>
+          </Banner>
+        </Box>
+      )}
+
       <Layout>
         {/* LEFT COLUMN - Cursor Gallery */}
         <Layout.Section variant="oneThird">
@@ -296,6 +330,8 @@ export default function CursorsPage() {
             selectedCursor={selectedCursor}
             cursorSize={cursorSize}
             onCursorSizeChange={setCursorSize}
+            isEnabled={isEnabled}
+            onToggleEnabled={setIsEnabled}
           />
         </Layout.Section>
       </Layout>
@@ -561,7 +597,7 @@ function UploadTabContent() {
 // RIGHT COLUMN - PREVIEW PANEL
 // ============================================================================
 
-function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange }) {
+function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnabled, onToggleEnabled }) {
   return (
     <BlockStack gap="400">
       {/* Preview Card */}
@@ -608,6 +644,28 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange }) {
           <Text as="h3" variant="headingSm" fontWeight="semibold">
             Cursor Settings
           </Text>
+
+          {/* Enable/Disable Toggle (Task 12) */}
+          <BlockStack gap="200">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text as="p" variant="bodyMd">
+                Custom Cursor Status
+              </Text>
+              <Button
+                variant={isEnabled ? "primary" : "plain"}
+                tone={isEnabled ? "success" : "critical"}
+                onClick={() => onToggleEnabled(!isEnabled)}
+                size="slim"
+              >
+                {isEnabled ? 'Enabled' : 'Disabled'}
+              </Button>
+            </div>
+            <Text as="p" variant="bodySm" tone="subdued">
+              {isEnabled 
+                ? 'Your custom cursor is active and will be displayed on your storefront.' 
+                : 'Your custom cursor is disabled. Click "Enable" above to activate it.'}
+            </Text>
+          </BlockStack>
 
           {/* Cursor Size Slider */}
           <BlockStack gap="200">
