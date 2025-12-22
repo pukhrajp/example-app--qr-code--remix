@@ -711,18 +711,18 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
         </BlockStack>
       </Card>
 
-      {/* Settings Card (Task 7 - Cursor Size Slider) */}
+      {/* Settings Card */}
       <Card>
         <BlockStack gap="400">
           <Text as="h3" variant="headingSm" fontWeight="semibold">
-            Cursor Settings
+            {t('settings.title')}
           </Text>
 
-          {/* Enable/Disable Toggle (Task 12) */}
+          {/* Enable/Disable Toggle */}
           <BlockStack gap="200">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text as="p" variant="bodyMd">
-                Custom Cursor Status
+                {t('settings.appStatus.label')}
               </Text>
               <Button
                 variant={isEnabled ? "primary" : "plain"}
@@ -735,8 +735,8 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
             </div>
             <Text as="p" variant="bodySm" tone="subdued">
               {isEnabled 
-                ? 'Your custom cursor is active and will be displayed on your storefront.' 
-                : 'Your custom cursor is disabled. Click "Enable" above to activate it.'}
+                ? t('settings.appStatus.enabled')
+                : t('settings.appStatus.disabled')}
             </Text>
           </BlockStack>
 
@@ -744,14 +744,14 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
           <BlockStack gap="200">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text as="p" variant="bodyMd">
-                Cursor Size
+                {t('settings.size.label')}
               </Text>
               <Text as="p" variant="bodySm" tone="subdued">
-                {cursorSize}px ({Math.round((cursorSize / 32) * 100)}%)
+                {t('settings.size.current', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
               </Text>
             </div>
             <RangeSlider
-              label={`Cursor size: ${cursorSize}px (${Math.round((cursorSize / 32) * 100)}%)`}
+              label={t('settings.size.current', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
               labelHidden
               value={cursorSize}
               onChange={onCursorSizeChange}
@@ -759,10 +759,10 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               max={64}
               step={1}
               output
-              helpText={`Adjust the size of your custom cursor between 16px and 64px. Current size: ${cursorSize}px`}
+              helpText={t('settings.size.help')}
             />
             <Text as="p" variant="bodySm" tone="subdued">
-              Adjust the size of your custom cursor (16px - 64px)
+              {t('settings.size.help')}
             </Text>
           </BlockStack>
         </BlockStack>
