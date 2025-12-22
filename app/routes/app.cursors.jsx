@@ -326,28 +326,28 @@ export default function CursorsPage() {
       {(error || (actionData && !actionData.success)) && (
         <Box paddingBlockEnd="400">
           <Banner
-            title="Error"
+            title={t('banner.error.title')}
             tone="critical"
           >
-            <p>{error || actionData?.message || 'An unexpected error occurred. Please try again.'}</p>
+            <p>{error || actionData?.message || t('banner.error.default')}</p>
           </Banner>
         </Box>
       )}
 
-      {/* Enable/Disable Banner */}
+      {/* Disabled Banner */}
       {!isEnabled && !error && (
         <Box paddingBlockEnd="400">
           <Banner
-            title="Custom cursor is currently disabled"
+            title={t('banner.disabled.title')}
             tone="warning"
             action={{
-              content: 'Enable cursor',
+              content: t('banner.disabled.action'),
               onAction: () => {
                 setIsEnabled(true);
               },
             }}
           >
-            <p>Your custom cursor settings are saved but not active on your storefront. Enable it to show the custom cursor to your customers.</p>
+            <p>{t('banner.disabled.description')}</p>
           </Banner>
         </Box>
       )}
