@@ -18,6 +18,12 @@
     "saving": "Enregistrement...",
     "saved": "Enregistré",
     "error": "Erreur"
+  },
+  "language": {
+    "label": "Langue",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español"
   }
 }
 

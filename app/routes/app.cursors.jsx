@@ -21,6 +21,7 @@ import {
 import { CheckSmallIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 // ============================================================================
 // LOADER - Data Fetching
@@ -338,7 +339,15 @@ export default function CursorsPage() {
   }, [selectedCursorId, cursorSize, isEnabled, submit]);
 
   return (
-    <Page title={t('page.title')}>
+    <Page 
+      title={t('page.title')}
+      secondaryActions={[
+        {
+          content: <LanguageSwitcher />,
+          plain: true,
+        }
+      ]}
+    >
       {/* Error Banner */}
       {(error || (actionData && !actionData.success)) && (
         <Box paddingBlockEnd="400">

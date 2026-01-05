@@ -10,6 +10,7 @@ import i18n from './config';
  * Features:
  * - Initializes i18next with Shopify formatting
  * - Provides translation context to all child components
+ * - Loads saved language preference from localStorage
  * - Handles loading state during initialization
  * - Supports automatic locale detection from Shopify
  * 
@@ -23,8 +24,15 @@ export function I18nProvider({ children }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // i18next is already initialized in config.js
-    // Just mark as ready
+    // Load saved language preference from localStorage
+    const savedLanguage = localStorage.getItem('cursor-app-language');
+    
+    if (savedLanguage && ['en', 'fr', 'es'].includes(savedLanguage)) {
+      // Set the saved language
+      i18n.changeLanguage(savedLanguage);
+    }
+    
+    // Mark as ready
     setIsReady(true);
   }, []);
 

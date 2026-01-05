@@ -18,6 +18,12 @@
     "saving": "Guardando...",
     "saved": "Guardado",
     "error": "Error"
+  },
+  "language": {
+    "label": "Idioma",
+    "english": "English",
+    "french": "Français",
+    "spanish": "Español"
   }
 }
 
