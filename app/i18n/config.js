@@ -12,6 +12,11 @@ import frCommon from './locales/fr/common.json';
 import frCursors from './locales/fr/cursors.json';
 import frErrors from './locales/fr/errors.json';
 
+// Import Spanish translations
+import esCommon from './locales/es/common.json';
+import esCursors from './locales/es/cursors.json';
+import esErrors from './locales/es/errors.json';
+
 /**
  * i18n Configuration for Custom Cursor App
  * 
@@ -23,7 +28,7 @@ import frErrors from './locales/fr/errors.json';
  * Supported Languages:
  * - English (en) - Default ✅
  * - French (fr) - Available ✅
- * - Spanish (es) - Coming soon
+ * - Spanish (es) - Available ✅
  * - German (de) - Coming soon
  * - Portuguese (pt) - Coming soon
  */
@@ -46,9 +51,9 @@ i18n
         errors: frErrors,
       },
       es: {
-        common: {},
-        cursors: {},
-        errors: {},
+        common: esCommon,
+        cursors: esCursors,
+        errors: esErrors,
       },
       de: {
         common: {},

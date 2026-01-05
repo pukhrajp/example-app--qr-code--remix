@@ -1,0 +1,9 @@
+{
+  "sizeRange": "El tamaño del cursor debe estar entre 16px y 64px",
+  "notFound": "Cursor seleccionado no encontrado",
+  "saveFailed": "Error al guardar la configuración del cursor. Por favor, inténtelo de nuevo.",
+  "loadFailed": "Error al cargar los datos del cursor",
+  "invalidAction": "Acción inválida",
+  "generic": "Ocurrió un error. Por favor, inténtelo de nuevo."
+}
+

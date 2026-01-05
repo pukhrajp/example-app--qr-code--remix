@@ -1,0 +1,85 @@
+{
+  "page": {
+    "title": "Cursor personalizado"
+  },
+  "banner": {
+    "error": {
+      "title": "Error",
+      "default": "Ocurrió un error inesperado. Por favor, inténtelo de nuevo."
+    },
+    "disabled": {
+      "title": "El cursor personalizado está actualmente deshabilitado",
+      "description": "Su configuración de cursor personalizado está guardada pero no activa en su tienda online. Habilítelo para mostrar el cursor personalizado a sus clientes.",
+      "action": "Habilitar cursor"
+    }
+  },
+  "buttons": {
+    "save": "Guardar y publicar",
+    "reset": "Restablecer predeterminado",
+    "enable": "Habilitar",
+    "disable": "Deshabilitar"
+  },
+  "preview": {
+    "title": "Vista previa del cursor",
+    "empty": {
+      "heading": "Seleccione un cursor de la galería",
+      "description": "Haga clic en cualquier cursor de la izquierda para ver una vista previa aquí"
+    },
+    "instructions": "✨ ¡Pase el cursor sobre esta área para ver su cursor personalizado en acción!",
+    "currentSize": "Tamaño actual: {{size}}px ({{percentage}}%)"
+  },
+  "settings": {
+    "title": "Configuración del cursor",
+    "appStatus": {
+      "label": "Estado de la aplicación",
+      "enabled": "Su cursor personalizado está activo y se mostrará en su tienda online.",
+      "disabled": "Su cursor personalizado está deshabilitado. Haga clic en \"Habilitar\" arriba para activarlo."
+    },
+    "size": {
+      "label": "Tamaño del cursor",
+      "current": "{{size}}px ({{percentage}}%)",
+      "help": "Ajuste el tamaño de su cursor personalizado (16px - 64px)"
+    }
+  },
+  "tabs": {
+    "gallery": "Galería de cursores",
+    "upload": "Subir el suyo"
+  },
+  "categories": {
+    "professional": "Profesional",
+    "fun": "Divertido",
+    "seasonal": "Estacional",
+    "gaming": "Gaming",
+    "fashion": "Moda",
+    "minimal": "Minimalista",
+    "animated": "Animado"
+  },
+  "badge": {
+    "selected": "Seleccionado"
+  },
+  "empty": {
+    "gallery": {
+      "title": "Aún no se han subido cursores",
+      "description": "Comience agregando cursores a su galería."
+    },
+    "upload": {
+      "title": "Suba su propio cursor",
+      "description": "¡Próximamente! Podrá subir imágenes de cursor personalizadas aquí."
+    }
+  },
+  "toast": {
+    "success": "Cursor publicado exitosamente",
+    "reset": "Cursor restablecido a predeterminado",
+    "error": "Error al guardar la configuración del cursor. Por favor, inténtelo de nuevo.",
+    "enableSuccess": "Cursor personalizado habilitado",
+    "disableSuccess": "Cursor personalizado deshabilitado"
+  },
+  "aria": {
+    "saveButton": "Guardar y publicar cursor {{name}} con tamaño de {{size}}px",
+    "resetButton": "Restablecer toda la configuración del cursor a los valores predeterminados",
+    "selectCursor": "Seleccionar cursor {{name}}{{status}}",
+    "previewRegion": "Vista previa del cursor {{name}} a {{size}}px",
+    "previewEmpty": "Vista previa del cursor - ningún cursor seleccionado"
+  }
+}
+
