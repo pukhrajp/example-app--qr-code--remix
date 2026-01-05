@@ -7,6 +7,11 @@ import enCommon from './locales/en/common.json';
 import enCursors from './locales/en/cursors.json';
 import enErrors from './locales/en/errors.json';
 
+// Import French translations
+import frCommon from './locales/fr/common.json';
+import frCursors from './locales/fr/cursors.json';
+import frErrors from './locales/fr/errors.json';
+
 /**
  * i18n Configuration for Custom Cursor App
  * 
@@ -16,11 +21,11 @@ import enErrors from './locales/en/errors.json';
  * - Integrates with Shopify App Bridge for locale detection
  * 
  * Supported Languages:
- * - English (en) - Default
- * - French (fr) - Coming in Phase 2
- * - Spanish (es) - Coming in Phase 2
- * - German (de) - Coming in Phase 2
- * - Portuguese (pt) - Coming in Phase 2
+ * - English (en) - Default ✅
+ * - French (fr) - Available ✅
+ * - Spanish (es) - Coming soon
+ * - German (de) - Coming soon
+ * - Portuguese (pt) - Coming soon
  */
 
 // Initialize i18next with Shopify formatting plugin
@@ -36,9 +41,9 @@ i18n
         errors: enErrors,
       },
       fr: {
-        common: {},
-        cursors: {},
-        errors: {},
+        common: frCommon,
+        cursors: frCursors,
+        errors: frErrors,
       },
       es: {
         common: {},

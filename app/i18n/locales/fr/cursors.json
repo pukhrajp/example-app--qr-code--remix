@@ -1,0 +1,85 @@
+{
+  "page": {
+    "title": "Curseur personnalisé"
+  },
+  "banner": {
+    "error": {
+      "title": "Erreur",
+      "default": "Une erreur inattendue s'est produite. Veuillez réessayer."
+    },
+    "disabled": {
+      "title": "Le curseur personnalisé est actuellement désactivé",
+      "description": "Vos paramètres de curseur personnalisé sont enregistrés mais non actifs sur votre boutique en ligne. Activez-le pour afficher le curseur personnalisé à vos clients.",
+      "action": "Activer le curseur"
+    }
+  },
+  "buttons": {
+    "save": "Enregistrer et publier",
+    "reset": "Réinitialiser par défaut",
+    "enable": "Activer",
+    "disable": "Désactiver"
+  },
+  "preview": {
+    "title": "Aperçu du curseur",
+    "empty": {
+      "heading": "Sélectionnez un curseur dans la galerie",
+      "description": "Cliquez sur n'importe quel curseur à gauche pour voir un aperçu ici"
+    },
+    "instructions": "✨ Passez la souris sur cette zone pour voir votre curseur personnalisé en action !",
+    "currentSize": "Taille actuelle : {{size}}px ({{percentage}}%)"
+  },
+  "settings": {
+    "title": "Paramètres du curseur",
+    "appStatus": {
+      "label": "Statut de l'application",
+      "enabled": "Votre curseur personnalisé est actif et sera affiché sur votre boutique en ligne.",
+      "disabled": "Votre curseur personnalisé est désactivé. Cliquez sur \"Activer\" ci-dessus pour l'activer."
+    },
+    "size": {
+      "label": "Taille du curseur",
+      "current": "{{size}}px ({{percentage}}%)",
+      "help": "Ajustez la taille de votre curseur personnalisé (16px - 64px)"
+    }
+  },
+  "tabs": {
+    "gallery": "Galerie de curseurs",
+    "upload": "Télécharger le vôtre"
+  },
+  "categories": {
+    "professional": "Professionnel",
+    "fun": "Amusant",
+    "seasonal": "Saisonnier",
+    "gaming": "Gaming",
+    "fashion": "Mode",
+    "minimal": "Minimaliste",
+    "animated": "Animé"
+  },
+  "badge": {
+    "selected": "Sélectionné"
+  },
+  "empty": {
+    "gallery": {
+      "title": "Aucun curseur téléchargé pour le moment",
+      "description": "Commencez par ajouter des curseurs à votre galerie."
+    },
+    "upload": {
+      "title": "Téléchargez votre propre curseur",
+      "description": "Bientôt disponible ! Vous pourrez télécharger des images de curseur personnalisées ici."
+    }
+  },
+  "toast": {
+    "success": "Curseur publié avec succès",
+    "reset": "Curseur réinitialisé par défaut",
+    "error": "Échec de l'enregistrement des paramètres du curseur. Veuillez réessayer.",
+    "enableSuccess": "Curseur personnalisé activé",
+    "disableSuccess": "Curseur personnalisé désactivé"
+  },
+  "aria": {
+    "saveButton": "Enregistrer et publier le curseur {{name}} avec une taille de {{size}}px",
+    "resetButton": "Réinitialiser tous les paramètres du curseur aux valeurs par défaut",
+    "selectCursor": "Sélectionner le curseur {{name}}{{status}}",
+    "previewRegion": "Aperçu du curseur {{name}} à {{size}}px",
+    "previewEmpty": "Aperçu du curseur - aucun curseur sélectionné"
+  }
+}
+

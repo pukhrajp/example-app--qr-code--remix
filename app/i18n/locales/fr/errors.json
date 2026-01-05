@@ -1,0 +1,9 @@
+{
+  "sizeRange": "La taille du curseur doit être comprise entre 16px et 64px",
+  "notFound": "Curseur sélectionné introuvable",
+  "saveFailed": "Échec de l'enregistrement des paramètres du curseur. Veuillez réessayer.",
+  "loadFailed": "Échec du chargement des données du curseur",
+  "invalidAction": "Action invalide",
+  "generic": "Une erreur s'est produite. Veuillez réessayer."
+}
+
