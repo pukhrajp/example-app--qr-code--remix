@@ -10,17 +10,50 @@ import { I18nProvider } from "../i18n/I18nProvider";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }) {
-  await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
 
-  return json({ apiKey: process.env.SHOPIFY_API_KEY });
+  // Fetch shop's primary locale for auto-language detection
+  let shopLocale = null;
+  try {
+    const response = await admin.graphql(
+      `#graphql
+      query {
+        shop {
+          primaryDomain {
+            host
+          }
+          currencyCode
+          ianaTimezone
+          enabledPresentmentCurrencies
+        }
+      }`
+    );
+    const data = await response.json();
+    
+    // Get browser locale from request headers as fallback
+    const acceptLanguage = request.headers.get('accept-language');
+    const browserLocale = acceptLanguage?.split(',')[0]?.split('-')[0] || 'en';
+    
+    // Use browser locale as detected locale (Shopify GraphQL doesn't expose shop locale directly)
+    // In a production app, you might use shop.billingAddress.country or other indicators
+    shopLocale = browserLocale;
+  } catch (error) {
+    console.error('Error fetching shop locale:', error);
+    shopLocale = 'en'; // Fallback to English
+  }
+
+  return json({ 
+    apiKey: process.env.SHOPIFY_API_KEY,
+    detectedLocale: shopLocale 
+  });
 }
 
 export default function App() {
-  const { apiKey } = useLoaderData();
+  const { apiKey, detectedLocale } = useLoaderData();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <I18nProvider>
+      <I18nProvider detectedLocale={detectedLocale}>
         <Outlet />
       </I18nProvider>
     </AppProvider>

@@ -1,6 +1,6 @@
 import { Select } from '@shopify/polaris';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 /**
  * LanguageSwitcher Component
@@ -9,6 +9,7 @@ import { useCallback, useEffect } from 'react';
  * - Persists language preference to localStorage
  * - Updates entire app instantly on change
  * - Shows flag emoji + native language name
+ * - Marks manual selection to override auto-detection
  * 
  * Supported Languages:
  * - English (en) 🇬🇧
@@ -25,22 +26,21 @@ export default function LanguageSwitcher() {
     { label: '🇪🇸 Español', value: 'es' },
   ];
 
-  // Load saved language preference on mount
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('cursor-app-language');
-    if (savedLanguage && savedLanguage !== i18n.language) {
-      i18n.changeLanguage(savedLanguage);
-    }
-  }, [i18n]);
-
   // Handle language change
   const handleLanguageChange = useCallback(
     (newLanguage) => {
       // Change language in i18next
       i18n.changeLanguage(newLanguage);
       
-      // Persist to localStorage
+      // Persist to localStorage with 'manual' source
+      // This ensures manual selection always overrides auto-detection
       localStorage.setItem('cursor-app-language', newLanguage);
+      localStorage.setItem('cursor-app-language-source', 'manual');
+      
+      // Log for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[LanguageSwitcher] User manually selected: ${newLanguage}`);
+      }
     },
     [i18n]
   );
