@@ -26,7 +26,11 @@
       "description": "Click any cursor on the left to see a preview here"
     },
     "instructions": "✨ Hover over this area to see your custom cursor in action!",
-    "currentSize": "Current size: {{size}}px ({{percentage}}%)"
+    "currentSize": "Current size: {{size}}px ({{percentage}}%)",
+    "demo": {
+      "button": "Hover to see cursor change 🎯",
+      "hint": "Default cursor on area, hover cursor on button"
+    }
   },
   "settings": {
     "title": "Cursor Settings",

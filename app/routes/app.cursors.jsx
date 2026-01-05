@@ -787,6 +787,7 @@ function PreviewBox({ selectedCursor }) {
   const { cursorSize } = useCursor(); // Get cursorSize from context!
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHoveringButton, setIsHoveringButton] = useState(false); // Track button hover
 
   // Track mouse position for custom cursor (Task 8A)
   const handleMouseMove = (e) => {
@@ -796,6 +797,11 @@ function PreviewBox({ selectedCursor }) {
       y: e.clientY - rect.top,
     });
   };
+
+  // Determine which cursor image to use based on hover state
+  const currentCursorImage = isHoveringButton && selectedCursor?.hoverImageUrl 
+    ? selectedCursor.hoverImageUrl 
+    : selectedCursor?.imageUrl;
 
   return (
     <div
@@ -847,6 +853,41 @@ function PreviewBox({ selectedCursor }) {
                 {t('preview.currentSize', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
               </Text>
             </Box>
+
+            {/* Interactive Demo Button - Shows hover cursor on button hover */}
+            {selectedCursor.hoverImageUrl && (
+              <Box paddingBlockStart="400">
+                <style>{`
+                  .cursor-demo-wrapper,
+                  .cursor-demo-wrapper *,
+                  .cursor-demo-wrapper button,
+                  .cursor-demo-wrapper button *,
+                  .cursor-demo-wrapper button:hover,
+                  .cursor-demo-wrapper button:hover * {
+                    cursor: none !important;
+                  }
+                `}</style>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <div
+                    className="cursor-demo-wrapper"
+                    onMouseEnter={() => setIsHoveringButton(true)}
+                    onMouseLeave={() => setIsHoveringButton(false)}
+                  >
+                    <Button 
+                      variant="primary"
+                      id="cursor-demo-button"
+                    >
+                      {t('preview.demo.button')}
+                    </Button>
+                  </div>
+                </div>
+                <Box paddingBlockStart="200">
+                  <Text as="p" variant="bodySm" alignment="center" tone="subdued">
+                    {t('preview.demo.hint')}
+                  </Text>
+                </Box>
+              </Box>
+            )}
           </Box>
 
           {/* Grid Pattern Background (Optional Visual Enhancement) */}
@@ -868,9 +909,9 @@ function PreviewBox({ selectedCursor }) {
           />
 
           {/* Custom Cursor Following Mouse (Task 8A) */}
-          {isHovering && (
+          {isHovering && currentCursorImage && (
             <img
-              src={selectedCursor.imageUrl}
+              src={currentCursorImage}
               alt="Custom cursor"
               style={{
                 position: 'absolute',

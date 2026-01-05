@@ -26,7 +26,11 @@
       "description": "Cliquez sur n'importe quel curseur à gauche pour voir un aperçu ici"
     },
     "instructions": "✨ Passez la souris sur cette zone pour voir votre curseur personnalisé en action !",
-    "currentSize": "Taille actuelle : {{size}}px ({{percentage}}%)"
+    "currentSize": "Taille actuelle : {{size}}px ({{percentage}}%)",
+    "demo": {
+      "button": "Survolez pour voir le changement de curseur 🎯",
+      "hint": "Curseur par défaut sur la zone, curseur de survol sur le bouton"
+    }
   },
   "settings": {
     "title": "Paramètres du curseur",

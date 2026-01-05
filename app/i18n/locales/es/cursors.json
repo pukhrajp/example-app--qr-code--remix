@@ -26,7 +26,11 @@
       "description": "Haga clic en cualquier cursor de la izquierda para ver una vista previa aquí"
     },
     "instructions": "✨ ¡Pase el cursor sobre esta área para ver su cursor personalizado en acción!",
-    "currentSize": "Tamaño actual: {{size}}px ({{percentage}}%)"
+    "currentSize": "Tamaño actual: {{size}}px ({{percentage}}%)",
+    "demo": {
+      "button": "Pase el cursor para ver el cambio 🎯",
+      "hint": "Cursor predeterminado en el área, cursor de hover en el botón"
+    }
   },
   "settings": {
     "title": "Configuración del cursor",
