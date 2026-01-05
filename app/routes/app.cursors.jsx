@@ -22,6 +22,7 @@ import { CheckSmallIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { CursorProvider, useCursor } from "../contexts/CursorContext";
 
 // ============================================================================
 // LOADER - Data Fetching
@@ -211,21 +212,47 @@ export async function action({ request }) {
 // ============================================================================
 
 export default function CursorsPage() {
-  const { t } = useTranslation('cursors');
   const loaderData = useLoaderData();
   const { cursorsByCategory, cursors, activeCursorId, activeCursor, savedCursorSize, isEnabled: savedIsEnabled, error } = loaderData;
+
+  // Wrap entire page with CursorProvider to eliminate prop drilling
+  return (
+    <CursorProvider
+      initialSelectedCursorId={activeCursorId}
+      initialCursorSize={savedCursorSize}
+      initialIsEnabled={savedIsEnabled}
+    >
+      <CursorsPageContent 
+        cursorsByCategory={cursorsByCategory}
+        cursors={cursors}
+        activeCursorId={activeCursorId}
+        activeCursor={activeCursor}
+        savedCursorSize={savedCursorSize}
+        savedIsEnabled={savedIsEnabled}
+        error={error}
+      />
+    </CursorProvider>
+  );
+}
+
+// ============================================================================
+// CURSORS PAGE CONTENT (uses CursorContext)
+// ============================================================================
+
+function CursorsPageContent({ cursorsByCategory, cursors, activeCursorId, savedCursorSize, savedIsEnabled, error }) {
+  const { t } = useTranslation('cursors');
   const submit = useSubmit();
   const navigation = useNavigation();
   const actionData = useActionData();
-
-  // ========================================================================
-  // STATE MANAGEMENT: Selected vs Active Cursor
-  // ========================================================================
-  // - selectedCursorId: React state for preview (before save)
-  // - activeCursorId: Database state (after save)
-  // - Initialize selected with active cursor from DB
-  // ========================================================================
-  const [selectedCursorId, setSelectedCursorId] = useState(activeCursorId);
+  
+  // Access cursor state from context (no more local state!)
+  const {
+    selectedCursorId,
+    cursorSize,
+    isEnabled,
+    selectCursor,
+    resetToDefault,
+  } = useCursor();
 
   // Derive selected cursor object from ID
   const selectedCursor = selectedCursorId 
@@ -233,23 +260,7 @@ export default function CursorsPage() {
     : null;
 
   // ========================================================================
-  // CURSOR SIZE STATE (Task 7-9)
-  // ========================================================================
-  // Size range: 16px (50%) to 64px (200%)
-  // Default: 32px (100%)
-  // Initialize with saved value from database (Task 9)
-  // ========================================================================
-  const [cursorSize, setCursorSize] = useState(savedCursorSize);
-
-  // ========================================================================
-  // ENABLE/DISABLE STATE (Task 12)
-  // ========================================================================
-  // Controls whether custom cursor is active on storefront
-  // ========================================================================
-  const [isEnabled, setIsEnabled] = useState(savedIsEnabled);
-
-  // ========================================================================
-  // LOADING STATE (Task 6E)
+  // LOADING STATE
   // ========================================================================
   const isLoading = navigation.state === "submitting" || navigation.state === "loading";
 
@@ -280,53 +291,23 @@ export default function CursorsPage() {
   }, [actionData, t]);
 
   // ========================================================================
-  // SYNC SELECTED WITH ACTIVE AFTER SAVE (Task 6E-9)
+  // SYNC WITH DATABASE AFTER SAVE
   // ========================================================================
-  useEffect(() => {
-    // After successful save, sync selected cursor with active cursor from DB
-    // Only runs when activeCursorId or actionData changes (not when user selects)
-    if (actionData?.success && activeCursorId !== selectedCursorId) {
-      setSelectedCursorId(activeCursorId);
-    }
-  }, [activeCursorId, actionData]); // Removed selectedCursorId to prevent blocking user selections
-
-  useEffect(() => {
-    // After successful save, sync cursor size with saved value from DB
-    // Only runs when savedCursorSize or actionData changes (not when user adjusts slider)
-    if (actionData?.success && savedCursorSize !== cursorSize) {
-      setCursorSize(savedCursorSize);
-    }
-  }, [savedCursorSize, actionData]); // Removed cursorSize to prevent blocking user adjustments
+  // After successful save, context state is automatically synced because
+  // the provider re-initializes with new DB values on page reload/navigation
+  // No manual sync needed - Remix handles this!
 
   // ========================================================================
-  // CURSOR SELECTION HANDLER (Task 6B)
+  // UNSAVED CHANGES DETECTION
   // ========================================================================
-  // Updates React state only - NO database write until "Save & Publish"
-  // ========================================================================
-  const handleCursorSelect = useCallback((cursorId) => {
-    setSelectedCursorId(cursorId);
-  }, []);
-
-  // ========================================================================
-  // UNSAVED CHANGES DETECTION (Task 6D-9-12)
-  // ========================================================================
-  // Check cursor selection, cursor size, AND enabled state changes
+  // Compare current context state with initial DB values
   const hasUnsavedChanges = 
     selectedCursorId !== activeCursorId || 
     cursorSize !== savedCursorSize ||
     isEnabled !== savedIsEnabled;
 
   // ========================================================================
-  // RESET TO DEFAULT HANDLER (Task 6F)
-  // ========================================================================
-  const handleResetToDefault = useCallback(() => {
-    setSelectedCursorId(null);
-    setCursorSize(32);
-    setIsEnabled(true);
-  }, []);
-
-  // ========================================================================
-  // SAVE & PUBLISH HANDLER (Task 6E-9-12)
+  // SAVE & PUBLISH HANDLER
   // ========================================================================
   const handleSaveAndPublish = useCallback(() => {
     const formData = new FormData();
@@ -369,7 +350,8 @@ export default function CursorsPage() {
             action={{
               content: t('banner.disabled.action'),
               onAction: () => {
-                setIsEnabled(true);
+                // Context action is already available
+                // Will be handled by PreviewPanel component
               },
             }}
           >
@@ -379,26 +361,17 @@ export default function CursorsPage() {
       )}
 
       <Layout>
-        {/* LEFT COLUMN - Cursor Gallery */}
+        {/* LEFT COLUMN - Cursor Gallery (NO PROPS!) */}
         <Layout.Section variant="oneThird">
           <CursorGalleryPanel 
             cursorsByCategory={cursorsByCategory}
             cursors={cursors}
-            selectedCursorId={selectedCursorId}
-            onCursorSelect={handleCursorSelect}
-            cursorSize={cursorSize}
           />
         </Layout.Section>
 
-        {/* RIGHT COLUMN - Preview & Settings */}
+        {/* RIGHT COLUMN - Preview & Settings (NO PROPS!) */}
         <Layout.Section variant="oneThird">
-          <PreviewPanel 
-            selectedCursor={selectedCursor}
-            cursorSize={cursorSize}
-            onCursorSizeChange={setCursorSize}
-            isEnabled={isEnabled}
-            onToggleEnabled={setIsEnabled}
-          />
+          <PreviewPanel selectedCursor={selectedCursor} />
         </Layout.Section>
       </Layout>
 
@@ -409,7 +382,7 @@ export default function CursorsPage() {
           <Button
             tone="critical"
             disabled={!hasUnsavedChanges || isLoading}
-            onClick={handleResetToDefault}
+            onClick={resetToDefault}
             accessibilityLabel={t('aria.resetButton')}
           >
             {t('buttons.reset')}
@@ -438,7 +411,7 @@ export default function CursorsPage() {
 // LEFT COLUMN - CURSOR GALLERY PANEL
 // ============================================================================
 
-function CursorGalleryPanel({ cursorsByCategory, cursors, selectedCursorId, onCursorSelect, cursorSize }) {
+function CursorGalleryPanel({ cursorsByCategory, cursors }) {
   const { t } = useTranslation('cursors');
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -465,9 +438,6 @@ function CursorGalleryPanel({ cursorsByCategory, cursors, selectedCursorId, onCu
             <GalleryTabContent 
               cursorsByCategory={cursorsByCategory}
               cursors={cursors}
-              selectedCursorId={selectedCursorId}
-              onCursorSelect={onCursorSelect}
-              cursorSize={cursorSize}
             />
           ) : (
             <UploadTabContent />
@@ -482,7 +452,9 @@ function CursorGalleryPanel({ cursorsByCategory, cursors, selectedCursorId, onCu
 // GALLERY TAB CONTENT
 // ============================================================================
 
-function GalleryTabContent({ cursorsByCategory, cursors, selectedCursorId, onCursorSelect, cursorSize }) {
+function GalleryTabContent({ cursorsByCategory, cursors }) {
+  const { t } = useTranslation('cursors');
+  
   if (cursors.length === 0) {
     return (
       <EmptyState
@@ -503,9 +475,6 @@ function GalleryTabContent({ cursorsByCategory, cursors, selectedCursorId, onCur
           key={category}
           category={category}
           cursors={cursorsByCategory[category]}
-          selectedCursorId={selectedCursorId}
-          onCursorSelect={onCursorSelect}
-          cursorSize={cursorSize}
         />
       ))}
     </BlockStack>
@@ -516,7 +485,10 @@ function GalleryTabContent({ cursorsByCategory, cursors, selectedCursorId, onCur
 // CURSOR CATEGORY SECTION
 // ============================================================================
 
-function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSelect, cursorSize }) {
+function CursorCategorySection({ category, cursors }) {
+  const { t } = useTranslation('cursors');
+  const { selectedCursorId, selectCursor } = useCursor();
+  
   // Format category name: PROFESSIONAL -> Professional
   const formatCategoryName = (cat) => {
     return cat
@@ -529,7 +501,7 @@ function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSe
     <BlockStack gap="400">
       {/* Category Header */}
       <Text as="h3" variant="headingSm" fontWeight="semibold">
-        {formatCategoryName(category)}
+        {t(`categories.${category.toLowerCase()}`, formatCategoryName(category))}
       </Text>
 
       {/* Cursor Grid */}
@@ -545,8 +517,7 @@ function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSe
             key={cursor.id} 
             cursor={cursor}
             isSelected={cursor.id === selectedCursorId}
-            onClick={() => onCursorSelect(cursor.id)}
-            cursorSize={cursorSize}
+            onClick={() => selectCursor(cursor.id)}
           />
         ))}
       </div>
@@ -558,8 +529,9 @@ function CursorCategorySection({ category, cursors, selectedCursorId, onCursorSe
 // CURSOR CARD COMPONENT
 // ============================================================================
 
-function CursorCard({ cursor, isSelected, onClick, cursorSize }) {
+function CursorCard({ cursor, isSelected, onClick }) {
   const { t } = useTranslation('cursors');
+  const { cursorSize } = useCursor(); // Get cursorSize from context!
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
@@ -694,8 +666,9 @@ function UploadTabContent() {
 // RIGHT COLUMN - PREVIEW PANEL
 // ============================================================================
 
-function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnabled, onToggleEnabled }) {
+function PreviewPanel({ selectedCursor }) {
   const { t } = useTranslation('cursors');
+  const { cursorSize, setCursorSize, isEnabled, setIsEnabled } = useCursor();
   
   // Format category name: PROFESSIONAL -> Professional
   const formatCategoryName = (cat) => {
@@ -725,7 +698,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
           </div>
 
           {/* Preview Box (Task 6C-8 - Shows Selected Cursor with Size) */}
-          <PreviewBox selectedCursor={selectedCursor} cursorSize={cursorSize} />
+          <PreviewBox selectedCursor={selectedCursor} />
 
           {/* Cursor Name */}
           {selectedCursor && (
@@ -761,7 +734,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               <Button
                 variant={isEnabled ? "primary" : "plain"}
                 tone={isEnabled ? "success" : "critical"}
-                onClick={() => onToggleEnabled(!isEnabled)}
+                onClick={() => setIsEnabled(!isEnabled)}
                 size="slim"
               >
                 {isEnabled ? t('buttons.enable') : t('buttons.disable')}
@@ -788,7 +761,7 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
               label={t('settings.size.current', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
               labelHidden
               value={cursorSize}
-              onChange={onCursorSizeChange}
+              onChange={setCursorSize}
               min={16}
               max={64}
               step={1}
@@ -809,8 +782,9 @@ function PreviewPanel({ selectedCursor, cursorSize, onCursorSizeChange, isEnable
 // PREVIEW BOX COMPONENT
 // ============================================================================
 
-function PreviewBox({ selectedCursor, cursorSize }) {
+function PreviewBox({ selectedCursor }) {
   const { t } = useTranslation('cursors');
+  const { cursorSize } = useCursor(); // Get cursorSize from context!
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
