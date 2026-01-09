@@ -1,28 +1,29 @@
-import { json, redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit, useNavigation, useActionData } from "@remix-run/react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Page,
   Layout,
-  Card,
-  Text,
-  BlockStack,
   Box,
-  EmptyState,
-  Tabs,
-  Badge,
-  Icon,
   Button,
   InlineStack,
-  RangeSlider,
   Banner,
+  DropZone,
+  Thumbnail,
+  InlineError,
+  TextField,
+  Text,
+  BlockStack,
+  Card,
+  Badge,
 } from "@shopify/polaris";
-import { CheckSmallIcon } from '@shopify/polaris-icons';
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { CursorProvider, useCursor } from "../contexts/CursorContext";
+import CursorGalleryPanel from "../components/cursors/CursorGalleryPanel";
+import PreviewPanel from "../components/cursors/PreviewPanel";
 
 // ============================================================================
 // LOADER - Data Fetching
@@ -194,6 +195,129 @@ export async function action({ request }) {
       });
     }
 
+    if (action === 'uploadCustomCursor') {
+      // Extract form data
+      const name = formData.get('name');
+      const description = formData.get('description') || '';
+      const imageUrl = formData.get('imageUrl'); // Data URL
+      const hoverImageUrl = formData.get('hoverImageUrl'); // Data URL (optional)
+      const width = parseInt(formData.get('width'), 10);
+      const height = parseInt(formData.get('height'), 10);
+      const fileSize = parseInt(formData.get('fileSize'), 10);
+      const hotspotX = parseInt(formData.get('hotspotX'), 10);
+      const hotspotY = parseInt(formData.get('hotspotY'), 10);
+
+      // Validate required fields
+      if (!name || !imageUrl) {
+        return json({ 
+          success: false, 
+          action: 'uploadCustomCursor',
+          messageKey: 'errors:missingFields'
+        });
+      }
+
+      // Create custom cursor in database
+      const newCursor = await db.cursor.create({
+        data: {
+          shop,
+          name: name.trim(),
+          description: description.trim(),
+          category: 'CUSTOM',
+          type: 'custom',
+          imageUrl,
+          hoverImageUrl: hoverImageUrl || null,
+          hotspotX,
+          hotspotY,
+          width,
+          height,
+          fileSize,
+          isPublished: true,
+          isActive: false,
+        },
+      });
+
+      return json({ 
+        success: true, 
+        action: 'uploadCustomCursor',
+        cursorId: newCursor.id,
+        messageKey: 'cursors:toast.uploadSuccess'
+      });
+    }
+
+    if (action === 'deleteCustomCursor') {
+      const cursorIdRaw = formData.get('cursorId');
+      const cursorId = cursorIdRaw ? parseInt(cursorIdRaw, 10) : null;
+
+      if (!cursorId) {
+        return json({ 
+          success: false, 
+          action: 'deleteCustomCursor',
+          messageKey: 'errors:invalidCursorId'
+        });
+      }
+
+      // Find the cursor to delete
+      const cursorToDelete = await db.cursor.findUnique({
+        where: { id: cursorId },
+      });
+
+      // Validate cursor exists
+      if (!cursorToDelete) {
+        return json({ 
+          success: false, 
+          action: 'deleteCustomCursor',
+          messageKey: 'errors:notFound'
+        });
+      }
+
+      // Validate cursor belongs to this shop (security check)
+      if (cursorToDelete.shop !== shop) {
+        return json({ 
+          success: false, 
+          action: 'deleteCustomCursor',
+          messageKey: 'errors:unauthorized'
+        });
+      }
+
+      // Validate cursor is custom type (can't delete gallery cursors)
+      if (cursorToDelete.type !== 'custom') {
+        return json({ 
+          success: false, 
+          action: 'deleteCustomCursor',
+          messageKey: 'errors:cannotDeleteGallery'
+        });
+      }
+
+      // Check if this cursor is currently active
+      const settings = await db.cursorSettings.findUnique({
+        where: { shop },
+      });
+
+      const isActive = settings?.activeCursorId === cursorId;
+
+      // Delete the cursor
+      await db.cursor.delete({
+        where: { id: cursorId },
+      });
+
+      // If this was the active cursor, clear the active cursor setting
+      if (isActive && settings) {
+        await db.cursorSettings.update({
+          where: { shop },
+          data: {
+            activeCursorId: null,
+          },
+        });
+      }
+
+      return json({ 
+        success: true, 
+        action: 'deleteCustomCursor',
+        wasActive: isActive,
+        messageKey: isActive ? 'cursors:toast.deleteSuccessActive' : 'cursors:toast.deleteSuccess'
+      });
+    }
+
     return json({ 
       success: false, 
       messageKey: 'errors:invalidAction'
@@ -245,6 +369,9 @@ function CursorsPageContent({ cursorsByCategory, cursors, activeCursorId, savedC
   const navigation = useNavigation();
   const actionData = useActionData();
   
+  // Track previous actionData to prevent duplicate toasts
+  const prevActionDataRef = useRef(null);
+  
   // Access cursor state from context (no more local state!)
   const {
     selectedCursorId,
@@ -268,27 +395,37 @@ function CursorsPageContent({ cursorsByCategory, cursors, activeCursorId, savedC
   // TOAST NOTIFICATION WITH i18n
   // ========================================================================
   useEffect(() => {
-    if (actionData?.success) {
-      const messageKey = actionData.messageKey || 'cursors:toast.success';
-      const [namespace, key] = messageKey.includes(':') 
-        ? messageKey.split(':') 
-        : ['cursors', messageKey];
+    // Only show toast if actionData has actually changed (not just dependencies)
+    if (actionData && actionData !== prevActionDataRef.current) {
+      prevActionDataRef.current = actionData;
       
-      shopify.toast.show(t(key, { ns: namespace }), {
-        duration: 3000,
-      });
-    } else if (actionData?.success === false && actionData?.messageKey) {
-      // Show error toast for failures
-      const [namespace, key] = actionData.messageKey.includes(':')
-        ? actionData.messageKey.split(':')
-        : ['cursors', actionData.messageKey];
-      
-      shopify.toast.show(t(key, { ns: namespace }), {
-        duration: 5000,
-        isError: true,
-      });
+      if (actionData.success) {
+        const messageKey = actionData.messageKey || 'cursors:toast.success';
+        const [namespace, key] = messageKey.includes(':') 
+          ? messageKey.split(':') 
+          : ['cursors', messageKey];
+        
+        shopify.toast.show(t(key, { ns: namespace }), {
+          duration: 3000,
+        });
+        
+        // If a cursor was deleted and it was selected, reset selection
+        if (actionData.action === 'deleteCustomCursor' && selectedCursor && !cursors.find(c => c.id === selectedCursorId)) {
+          resetToDefault();
+        }
+      } else if (actionData.success === false && actionData.messageKey) {
+        // Show error toast for failures
+        const [namespace, key] = actionData.messageKey.includes(':')
+          ? actionData.messageKey.split(':')
+          : ['cursors', actionData.messageKey];
+        
+        shopify.toast.show(t(key, { ns: namespace }), {
+          duration: 5000,
+          isError: true,
+        });
+      }
     }
-  }, [actionData, t]);
+  }, [actionData, t, selectedCursor, selectedCursorId, cursors, resetToDefault]);
 
   // ========================================================================
   // SYNC WITH DATABASE AFTER SAVE
@@ -369,11 +506,11 @@ function CursorsPageContent({ cursorsByCategory, cursors, activeCursorId, savedC
           />
         </Layout.Section>
 
-        {/* RIGHT COLUMN - Preview & Settings (NO PROPS!) */}
-        <Layout.Section variant="oneThird">
-          <PreviewPanel selectedCursor={selectedCursor} />
-        </Layout.Section>
-      </Layout>
+      {/* RIGHT COLUMN - Preview & Settings */}
+      <Layout.Section variant="oneThird">
+        <PreviewPanel selectedCursor={selectedCursor} />
+      </Layout.Section>
+    </Layout>
 
       {/* ACTION BUTTONS */}
       <Box paddingBlockStart="400">
@@ -407,552 +544,3 @@ function CursorsPageContent({ cursorsByCategory, cursors, activeCursorId, savedC
   );
 }
 
-// ============================================================================
-// LEFT COLUMN - CURSOR GALLERY PANEL
-// ============================================================================
-
-function CursorGalleryPanel({ cursorsByCategory, cursors }) {
-  const { t } = useTranslation('cursors');
-  const [selectedTab, setSelectedTab] = useState(0);
-
-  const handleTabChange = useCallback((selectedTabIndex) => {
-    setSelectedTab(selectedTabIndex);
-  }, []);
-
-  const tabs = [
-    {
-      id: 'gallery',
-      content: t('tabs.gallery'),
-    },
-    {
-      id: 'upload',
-      content: t('tabs.upload'),
-    },
-  ];
-
-  return (
-    <Card>
-      <Tabs tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
-        <div style={{ padding: '16px', maxHeight: '75vh', overflowY: 'auto' }}>
-          {selectedTab === 0 ? (
-            <GalleryTabContent 
-              cursorsByCategory={cursorsByCategory}
-              cursors={cursors}
-            />
-          ) : (
-            <UploadTabContent />
-          )}
-        </div>
-      </Tabs>
-    </Card>
-  );
-}
-
-// ============================================================================
-// GALLERY TAB CONTENT
-// ============================================================================
-
-function GalleryTabContent({ cursorsByCategory, cursors }) {
-  const { t } = useTranslation('cursors');
-  
-  if (cursors.length === 0) {
-    return (
-      <EmptyState
-        heading={t('empty.gallery.title')}
-        image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-      >
-        <p>{t('empty.gallery.description')}</p>
-      </EmptyState>
-    );
-  }
-
-  const categories = Object.keys(cursorsByCategory);
-
-  return (
-    <BlockStack gap="600">
-      {categories.map((category) => (
-        <CursorCategorySection
-          key={category}
-          category={category}
-          cursors={cursorsByCategory[category]}
-        />
-      ))}
-    </BlockStack>
-  );
-}
-
-// ============================================================================
-// CURSOR CATEGORY SECTION
-// ============================================================================
-
-function CursorCategorySection({ category, cursors }) {
-  const { t } = useTranslation('cursors');
-  const { selectedCursorId, selectCursor } = useCursor();
-  
-  // Format category name: PROFESSIONAL -> Professional
-  const formatCategoryName = (cat) => {
-    return cat
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
-  return (
-    <BlockStack gap="400">
-      {/* Category Header */}
-      <Text as="h3" variant="headingSm" fontWeight="semibold">
-        {t(`categories.${category.toLowerCase()}`, formatCategoryName(category))}
-      </Text>
-
-      {/* Cursor Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-          gap: '12px',
-        }}
-      >
-        {cursors.map((cursor) => (
-          <CursorCard 
-            key={cursor.id} 
-            cursor={cursor}
-            isSelected={cursor.id === selectedCursorId}
-            onClick={() => selectCursor(cursor.id)}
-          />
-        ))}
-      </div>
-    </BlockStack>
-  );
-}
-
-// ============================================================================
-// CURSOR CARD COMPONENT
-// ============================================================================
-
-function CursorCard({ cursor, isSelected, onClick }) {
-  const { t } = useTranslation('cursors');
-  const { cursorSize } = useCursor(); // Get cursorSize from context!
-  const [isHovering, setIsHovering] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick();
-    }
-  };
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={t('aria.selectCursor', { 
-        name: cursor.name, 
-        status: isSelected ? ' (currently selected)' : '' 
-      })}
-      aria-pressed={isSelected}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      onMouseMove={handleMouseMove}
-      style={{
-        border: isSelected ? '2px solid #005BD3' : (isHovering ? '2px solid #005BD3' : '1px solid #E1E3E5'),
-        borderRadius: '8px',
-        padding: '12px',
-        textAlign: 'center',
-        cursor: isHovering ? 'none' : 'pointer',
-        transition: 'all 0.2s ease',
-        backgroundColor: isSelected ? '#F6F6F7' : '#fff',
-        position: 'relative',
-        boxShadow: isHovering && !isSelected ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-      }}
-    >
-      {/* Selected Badge */}
-      {isSelected && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '4px',
-            right: '4px',
-          }}
-        >
-          <Badge tone="info">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Icon source={CheckSmallIcon} tone="info" />
-              {t('badge.selected')}
-            </div>
-          </Badge>
-        </div>
-      )}
-
-      <Box paddingBlockEnd="200">
-        <div
-          style={{
-            width: '64px',
-            height: '64px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: isSelected ? '#E3F3E8' : '#F6F6F7',
-            borderRadius: '4px',
-          }}
-        >
-          <img
-            src={cursor.imageUrl}
-            alt={cursor.name}
-            style={{
-              maxWidth: '48px',
-              maxHeight: '48px',
-              objectFit: 'contain',
-            }}
-          />
-        </div>
-      </Box>
-      <Text as="p" variant="bodySm" alignment="center" fontWeight={isSelected ? "semibold" : "regular"}>
-        {cursor.name}
-      </Text>
-
-      {/* Custom Cursor Following Mouse (Task 10 - Hover Preview) */}
-      {isHovering && cursorSize && (
-        <img
-          src={cursor.imageUrl}
-          alt="Cursor preview"
-          style={{
-            position: 'absolute',
-            left: `${mousePosition.x}px`,
-            top: `${mousePosition.y}px`,
-            width: `${cursorSize}px`,
-            height: `${cursorSize}px`,
-            objectFit: 'contain',
-            pointerEvents: 'none',
-            transform: `translate(-${cursor.hotspotX}px, -${cursor.hotspotY}px)`,
-            zIndex: 9999,
-            transition: 'width 0.2s ease, height 0.2s ease',
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// UPLOAD TAB CONTENT
-// ============================================================================
-
-function UploadTabContent() {
-  const { t } = useTranslation('cursors');
-  
-  return (
-    <EmptyState
-      heading={t('empty.upload.title')}
-      image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-    >
-      <p>{t('empty.upload.description')}</p>
-    </EmptyState>
-  );
-}
-
-// ============================================================================
-// RIGHT COLUMN - PREVIEW PANEL
-// ============================================================================
-
-function PreviewPanel({ selectedCursor }) {
-  const { t } = useTranslation('cursors');
-  const { cursorSize, setCursorSize, isEnabled, setIsEnabled } = useCursor();
-  
-  // Format category name: PROFESSIONAL -> Professional
-  const formatCategoryName = (cat) => {
-    return cat
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-
-  return (
-    <BlockStack gap="400">
-      {/* Preview Card */}
-      <Card>
-        <BlockStack gap="400">
-          {/* Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center' 
-          }}>
-            <Text as="h2" variant="headingMd">
-              {t('preview.title')}
-            </Text>
-            {selectedCursor && (
-              <Badge tone="info">{formatCategoryName(selectedCursor.category)}</Badge>
-            )}
-          </div>
-
-          {/* Preview Box (Task 6C-8 - Shows Selected Cursor with Size) */}
-          <PreviewBox selectedCursor={selectedCursor} />
-
-          {/* Cursor Name */}
-          {selectedCursor && (
-            <div style={{ textAlign: 'center' }}>
-              <Text as="p" variant="bodyMd" fontWeight="semibold">
-                {selectedCursor.name}
-              </Text>
-              {selectedCursor.description && (
-                <Box paddingBlockStart="200">
-                  <Text as="p" variant="bodySm" tone="subdued">
-                    {selectedCursor.description}
-                  </Text>
-                </Box>
-              )}
-            </div>
-          )}
-        </BlockStack>
-      </Card>
-
-      {/* Settings Card */}
-      <Card>
-        <BlockStack gap="400">
-          <Text as="h3" variant="headingSm" fontWeight="semibold">
-            {t('settings.title')}
-          </Text>
-
-          {/* Enable/Disable Toggle */}
-          <BlockStack gap="200">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text as="p" variant="bodyMd">
-                {t('settings.appStatus.label')}
-              </Text>
-              <Button
-                variant={isEnabled ? "primary" : "plain"}
-                tone={isEnabled ? "success" : "critical"}
-                onClick={() => setIsEnabled(!isEnabled)}
-                size="slim"
-              >
-                {isEnabled ? t('buttons.enable') : t('buttons.disable')}
-              </Button>
-            </div>
-            <Text as="p" variant="bodySm" tone="subdued">
-              {isEnabled 
-                ? t('settings.appStatus.enabled')
-                : t('settings.appStatus.disabled')}
-            </Text>
-          </BlockStack>
-
-          {/* Cursor Size Slider */}
-          <BlockStack gap="200">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text as="p" variant="bodyMd">
-                {t('settings.size.label')}
-              </Text>
-              <Text as="p" variant="bodySm" tone="subdued">
-                {t('settings.size.current', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
-              </Text>
-            </div>
-            <RangeSlider
-              label={t('settings.size.current', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
-              labelHidden
-              value={cursorSize}
-              onChange={setCursorSize}
-              min={16}
-              max={64}
-              step={1}
-              output
-              helpText={t('settings.size.help')}
-            />
-            <Text as="p" variant="bodySm" tone="subdued">
-              {t('settings.size.help')}
-            </Text>
-          </BlockStack>
-        </BlockStack>
-      </Card>
-    </BlockStack>
-  );
-}
-
-// ============================================================================
-// PREVIEW BOX COMPONENT
-// ============================================================================
-
-function PreviewBox({ selectedCursor }) {
-  const { t } = useTranslation('cursors');
-  const { cursorSize } = useCursor(); // Get cursorSize from context!
-  const [isHovering, setIsHovering] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHoveringButton, setIsHoveringButton] = useState(false); // Track button hover
-
-  // Track mouse position for custom cursor (Task 8A)
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  // Determine which cursor image to use based on hover state
-  const currentCursorImage = isHoveringButton && selectedCursor?.hoverImageUrl 
-    ? selectedCursor.hoverImageUrl 
-    : selectedCursor?.imageUrl;
-
-  return (
-    <div
-      role="region"
-      aria-label={selectedCursor ? t('aria.previewRegion', { name: selectedCursor.name, size: cursorSize }) : t('aria.previewEmpty')}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      onMouseMove={handleMouseMove}
-      style={{
-        width: '100%',
-        height: '300px',
-        border: isHovering && selectedCursor ? '2px solid #005BD3' : '2px dashed #C9CCCF',
-        borderRadius: '8px',
-        backgroundColor: isHovering && selectedCursor ? '#FFFFFF' : '#F6F6F7',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.2s ease',
-        cursor: selectedCursor && isHovering ? 'none' : 'default',
-      }}
-    >
-      {selectedCursor ? (
-        <>
-          {/* Cursor Image Display (Task 8 - Scaled by cursorSize) */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <img
-              src={selectedCursor.imageUrl}
-              alt={selectedCursor.name}
-              style={{
-                width: `${cursorSize}px`,
-                height: `${cursorSize}px`,
-                objectFit: 'contain',
-                transition: 'all 0.2s ease',
-              }}
-            />
-          </div>
-
-          {/* Preview Instructions */}
-          <Box paddingBlockStart="400">
-            <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-              {t('preview.instructions')}
-            </Text>
-            <Box paddingBlockStart="100">
-              <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-                {t('preview.currentSize', { size: cursorSize, percentage: Math.round((cursorSize / 32) * 100) })}
-              </Text>
-            </Box>
-
-            {/* Interactive Demo Button - Shows hover cursor on button hover */}
-            {selectedCursor.hoverImageUrl && (
-              <Box paddingBlockStart="400">
-                <style>{`
-                  .cursor-demo-wrapper,
-                  .cursor-demo-wrapper *,
-                  .cursor-demo-wrapper button,
-                  .cursor-demo-wrapper button *,
-                  .cursor-demo-wrapper button:hover,
-                  .cursor-demo-wrapper button:hover * {
-                    cursor: none !important;
-                  }
-                `}</style>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div
-                    className="cursor-demo-wrapper"
-                    onMouseEnter={() => setIsHoveringButton(true)}
-                    onMouseLeave={() => setIsHoveringButton(false)}
-                  >
-                    <Button 
-                      variant="primary"
-                      id="cursor-demo-button"
-                    >
-                      {t('preview.demo.button')}
-                    </Button>
-                  </div>
-                </div>
-                <Box paddingBlockStart="200">
-                  <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-                    {t('preview.demo.hint')}
-                  </Text>
-                </Box>
-              </Box>
-            )}
-          </Box>
-
-          {/* Grid Pattern Background (Optional Visual Enhancement) */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: `
-                linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent),
-                linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent)
-              `,
-              backgroundSize: '50px 50px',
-              opacity: 0.3,
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Custom Cursor Following Mouse (Task 8A) */}
-          {isHovering && currentCursorImage && (
-            <img
-              src={currentCursorImage}
-              alt="Custom cursor"
-              style={{
-                position: 'absolute',
-                left: `${mousePosition.x}px`,
-                top: `${mousePosition.y}px`,
-                width: `${cursorSize}px`,
-                height: `${cursorSize}px`,
-                objectFit: 'contain',
-                pointerEvents: 'none',
-                transform: `translate(-${selectedCursor.hotspotX}px, -${selectedCursor.hotspotY}px)`,
-                zIndex: 9999,
-                transition: 'width 0.2s ease, height 0.2s ease',
-              }}
-            />
-          )}
-        </>
-      ) : (
-        <BlockStack gap="300">
-          <div style={{ textAlign: 'center' }}>
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 64 64"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ opacity: 0.3 }}
-            >
-              <path
-                d="M32 8L24 24H16L32 56L48 24H40L32 8Z"
-                fill="#8C9196"
-              />
-            </svg>
-          </div>
-          <Text as="p" variant="bodyMd" alignment="center" tone="subdued">
-            {t('preview.empty.heading')}
-          </Text>
-          <Text as="p" variant="bodySm" alignment="center" tone="subdued">
-            {t('preview.empty.description')}
-          </Text>
-        </BlockStack>
-      )}
-    </div>
-  );
-}

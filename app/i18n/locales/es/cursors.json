@@ -56,10 +56,12 @@
     "gaming": "Gaming",
     "fashion": "Moda",
     "minimal": "Minimalista",
-    "animated": "Animado"
+    "animated": "Animado",
+    "custom": "Personalizado"
   },
   "badge": {
-    "selected": "Seleccionado"
+    "selected": "Seleccionado",
+    "custom": "Personalizado"
   },
   "empty": {
     "gallery": {
@@ -71,19 +73,101 @@
       "description": "¡Próximamente! Podrá subir imágenes de cursor personalizadas aquí."
     }
   },
+  "upload": {
+    "instructions": "Suba sus imágenes de cursor personalizadas para usarlas en su tienda online. Necesita un cursor predeterminado y un cursor de hover opcional.",
+    "defaultCursor": {
+      "label": "Imagen del cursor predeterminado",
+      "required": "Requerido",
+      "description": "Este cursor se mostrará por defecto al pasar el ratón sobre su tienda online"
+    },
+    "hoverCursor": {
+      "label": "Imagen del cursor de hover",
+      "optional": "Opcional",
+      "description": "Este cursor se mostrará al pasar el ratón sobre elementos clicables como botones y enlaces"
+    },
+    "dropzone": {
+      "labelDefault": "Subir imagen del cursor predeterminado",
+      "labelHover": "Subir imagen del cursor de hover",
+      "hint": "Acepta .png, .svg, .ico, .cur (máx 1MB)",
+      "error": "Tipo de archivo no compatible"
+    },
+    "hotspot": {
+      "title": "Punto de acceso del cursor",
+      "description": "Haga clic en la imagen a continuación para establecer el punto de clic preciso para su cursor. Aquí es donde el cursor registrará los clics.",
+      "coordinates": "Punto de acceso: X={{x}}, Y={{y}}",
+      "custom": "Personalizado",
+      "default": "Centro",
+      "resetToCenter": "Restablecer al centro",
+      "imageAlt": "Haga clic para establecer el punto de acceso",
+      "hint": "La cruz roja muestra dónde se registrarán los clics. Haga clic en cualquier lugar de la imagen para ajustar."
+    },
+    "metadata": {
+      "title": "Detalles del cursor",
+      "name": {
+        "label": "Nombre del cursor",
+        "placeholder": "ej: Mi puntero personalizado",
+        "help": "Dale un nombre descriptivo a tu cursor"
+      },
+      "description": {
+        "label": "Descripción",
+        "placeholder": "ej: Un cursor elegante para mi tienda",
+        "help": "Descripción opcional para tu referencia"
+      }
+    },
+    "buttons": {
+      "remove": "Eliminar",
+      "upload": "Subir cursor personalizado"
+    },
+    "preview": {
+      "title": "Vista previa del archivo",
+      "titleBoth": "Vista previa de ambos cursores",
+      "defaultLabel": "Estado predeterminado",
+      "hoverLabel": "Estado de hover",
+      "altDefault": "Vista previa del cursor predeterminado",
+      "altHover": "Vista previa del cursor de hover",
+      "hint": "Así se verá su cursor (el tamaño real puede variar)",
+      "bothHint": "Izquierda: Cursor predeterminado | Derecha: Cursor de hover (en elementos interactivos)"
+    },
+    "requirements": {
+      "title": "Requisitos del archivo",
+      "types": "Formatos: archivos PNG, SVG, ICO o CUR",
+      "size": "Tamaño máximo: 1MB por archivo",
+      "dimensions": "Dimensiones recomendadas: 32x32px"
+    },
+    "validation": {
+      "noFile": "Por favor seleccione un archivo para subir",
+      "invalidType": "Tipo de archivo inválido. Por favor suba solo archivos PNG, SVG, ICO o CUR.",
+      "tooLarge": "El archivo es demasiado grande. El tamaño máximo es 1MB.",
+      "nameRequired": "El nombre del cursor es requerido",
+      "defaultImageRequired": "La imagen del cursor predeterminado es requerida"
+    }
+  },
   "toast": {
     "success": "Cursor publicado exitosamente",
     "reset": "Cursor restablecido a predeterminado",
     "error": "Error al guardar la configuración del cursor. Por favor, inténtelo de nuevo.",
     "enableSuccess": "Cursor personalizado habilitado",
-    "disableSuccess": "Cursor personalizado deshabilitado"
+    "disableSuccess": "Cursor personalizado deshabilitado",
+    "uploadSuccess": "¡Cursor personalizado subido exitosamente!",
+    "deleteSuccess": "Cursor personalizado eliminado exitosamente",
+    "deleteSuccessActive": "Cursor personalizado eliminado exitosamente. El cursor activo ha sido restablecido."
   },
   "aria": {
     "saveButton": "Guardar y publicar cursor {{name}} con tamaño de {{size}}px",
     "resetButton": "Restablecer toda la configuración del cursor a los valores predeterminados",
     "selectCursor": "Seleccionar cursor {{name}}{{status}}",
     "previewRegion": "Vista previa del cursor {{name}} a {{size}}px",
-    "previewEmpty": "Vista previa del cursor - ningún cursor seleccionado"
+    "previewEmpty": "Vista previa del cursor - ningún cursor seleccionado",
+    "deleteCursor": "Eliminar cursor {{name}}"
+  },
+  "delete": {
+    "modal": {
+      "title": "Eliminar cursor personalizado",
+      "message": "¿Está seguro de que desea eliminar \"{{name}}\"?",
+      "warning": "Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    }
   }
 }
 

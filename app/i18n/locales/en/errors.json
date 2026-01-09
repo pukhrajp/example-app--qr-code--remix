@@ -4,6 +4,10 @@
   "saveFailed": "Failed to save cursor settings. Please try again.",
   "loadFailed": "Failed to load cursor data",
   "invalidAction": "Invalid action",
+  "missingFields": "Required fields are missing. Please fill in all required information.",
+  "invalidCursorId": "Invalid cursor ID",
+  "unauthorized": "You do not have permission to delete this cursor",
+  "cannotDeleteGallery": "Gallery cursors cannot be deleted",
   "generic": "An error occurred. Please try again."
 }
 

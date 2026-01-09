@@ -56,10 +56,12 @@
     "gaming": "Gaming",
     "fashion": "Mode",
     "minimal": "Minimaliste",
-    "animated": "Animé"
+    "animated": "Animé",
+    "custom": "Personnalisé"
   },
   "badge": {
-    "selected": "Sélectionné"
+    "selected": "Sélectionné",
+    "custom": "Personnalisé"
   },
   "empty": {
     "gallery": {
@@ -71,19 +73,101 @@
       "description": "Bientôt disponible ! Vous pourrez télécharger des images de curseur personnalisées ici."
     }
   },
+  "upload": {
+    "instructions": "Téléchargez vos images de curseur personnalisées pour les utiliser sur votre boutique en ligne. Vous avez besoin d'un curseur par défaut et d'un curseur de survol optionnel.",
+    "defaultCursor": {
+      "label": "Image du curseur par défaut",
+      "required": "Requis",
+      "description": "Ce curseur sera affiché par défaut lors du survol de votre boutique en ligne"
+    },
+    "hoverCursor": {
+      "label": "Image du curseur de survol",
+      "optional": "Optionnel",
+      "description": "Ce curseur sera affiché lors du survol d'éléments cliquables comme les boutons et les liens"
+    },
+    "dropzone": {
+      "labelDefault": "Télécharger l'image du curseur par défaut",
+      "labelHover": "Télécharger l'image du curseur de survol",
+      "hint": "Accepte .png, .svg, .ico, .cur (max 1 Mo)",
+      "error": "Type de fichier non pris en charge"
+    },
+    "hotspot": {
+      "title": "Point chaud du curseur",
+      "description": "Cliquez sur l'image ci-dessous pour définir le point de clic précis de votre curseur. C'est ici que le curseur enregistrera les clics.",
+      "coordinates": "Point chaud : X={{x}}, Y={{y}}",
+      "custom": "Personnalisé",
+      "default": "Centre",
+      "resetToCenter": "Réinitialiser au centre",
+      "imageAlt": "Cliquez pour définir le point chaud",
+      "hint": "Le réticule rouge indique où les clics seront enregistrés. Cliquez n'importe où sur l'image pour ajuster."
+    },
+    "metadata": {
+      "title": "Détails du curseur",
+      "name": {
+        "label": "Nom du curseur",
+        "placeholder": "ex: Mon pointeur personnalisé",
+        "help": "Donnez un nom descriptif à votre curseur"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "ex: Un curseur élégant pour ma boutique",
+        "help": "Description optionnelle pour votre référence"
+      }
+    },
+    "buttons": {
+      "remove": "Supprimer",
+      "upload": "Télécharger le curseur personnalisé"
+    },
+    "preview": {
+      "title": "Aperçu du fichier",
+      "titleBoth": "Aperçu des deux curseurs",
+      "defaultLabel": "État par défaut",
+      "hoverLabel": "État de survol",
+      "altDefault": "Aperçu du curseur par défaut",
+      "altHover": "Aperçu du curseur de survol",
+      "hint": "Voici comment votre curseur apparaîtra (la taille réelle peut varier)",
+      "bothHint": "Gauche : Curseur par défaut | Droite : Curseur de survol (sur les éléments interactifs)"
+    },
+    "requirements": {
+      "title": "Exigences du fichier",
+      "types": "Formats : fichiers PNG, SVG, ICO ou CUR",
+      "size": "Taille maximale : 1 Mo par fichier",
+      "dimensions": "Dimensions recommandées : 32x32px"
+    },
+    "validation": {
+      "noFile": "Veuillez sélectionner un fichier à télécharger",
+      "invalidType": "Type de fichier invalide. Veuillez télécharger uniquement des fichiers PNG, SVG, ICO ou CUR.",
+      "tooLarge": "Le fichier est trop volumineux. La taille maximale est de 1 Mo.",
+      "nameRequired": "Le nom du curseur est requis",
+      "defaultImageRequired": "L'image du curseur par défaut est requise"
+    }
+  },
   "toast": {
     "success": "Curseur publié avec succès",
     "reset": "Curseur réinitialisé par défaut",
     "error": "Échec de l'enregistrement des paramètres du curseur. Veuillez réessayer.",
     "enableSuccess": "Curseur personnalisé activé",
-    "disableSuccess": "Curseur personnalisé désactivé"
+    "disableSuccess": "Curseur personnalisé désactivé",
+    "uploadSuccess": "Curseur personnalisé téléchargé avec succès !",
+    "deleteSuccess": "Curseur personnalisé supprimé avec succès",
+    "deleteSuccessActive": "Curseur personnalisé supprimé avec succès. Le curseur actif a été réinitialisé."
   },
   "aria": {
     "saveButton": "Enregistrer et publier le curseur {{name}} avec une taille de {{size}}px",
     "resetButton": "Réinitialiser tous les paramètres du curseur aux valeurs par défaut",
     "selectCursor": "Sélectionner le curseur {{name}}{{status}}",
     "previewRegion": "Aperçu du curseur {{name}} à {{size}}px",
-    "previewEmpty": "Aperçu du curseur - aucun curseur sélectionné"
+    "previewEmpty": "Aperçu du curseur - aucun curseur sélectionné",
+    "deleteCursor": "Supprimer le curseur {{name}}"
+  },
+  "delete": {
+    "modal": {
+      "title": "Supprimer le curseur personnalisé",
+      "message": "Êtes-vous sûr de vouloir supprimer \"{{name}}\" ?",
+      "warning": "Cette action ne peut pas être annulée.",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
+    }
   }
 }
 

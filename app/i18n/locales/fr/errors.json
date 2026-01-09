@@ -4,6 +4,10 @@
   "saveFailed": "Échec de l'enregistrement des paramètres du curseur. Veuillez réessayer.",
   "loadFailed": "Échec du chargement des données du curseur",
   "invalidAction": "Action invalide",
+  "missingFields": "Des champs requis sont manquants. Veuillez remplir toutes les informations requises.",
+  "invalidCursorId": "ID de curseur invalide",
+  "unauthorized": "Vous n'avez pas la permission de supprimer ce curseur",
+  "cannotDeleteGallery": "Les curseurs de la galerie ne peuvent pas être supprimés",
   "generic": "Une erreur s'est produite. Veuillez réessayer."
 }
 

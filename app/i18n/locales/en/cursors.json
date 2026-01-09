@@ -56,10 +56,12 @@
     "gaming": "Gaming",
     "fashion": "Fashion",
     "minimal": "Minimal",
-    "animated": "Animated"
+    "animated": "Animated",
+    "custom": "Custom"
   },
   "badge": {
-    "selected": "Selected"
+    "selected": "Selected",
+    "custom": "Custom"
   },
   "empty": {
     "gallery": {
@@ -71,19 +73,101 @@
       "description": "Coming soon! You'll be able to upload custom cursor images here."
     }
   },
+  "upload": {
+    "instructions": "Upload your custom cursor images to use on your storefront. You need both a default cursor and an optional hover state cursor.",
+    "defaultCursor": {
+      "label": "Default Cursor Image",
+      "required": "Required",
+      "description": "This cursor will be shown by default when hovering over your storefront"
+    },
+    "hoverCursor": {
+      "label": "Hover State Cursor Image",
+      "optional": "Optional",
+      "description": "This cursor will be shown when hovering over clickable elements like buttons and links"
+    },
+    "dropzone": {
+      "labelDefault": "Upload default cursor image",
+      "labelHover": "Upload hover cursor image",
+      "hint": "Accepts .png, .svg, .ico, .cur (max 1MB)",
+      "error": "File type not supported"
+    },
+    "hotspot": {
+      "title": "Cursor Hotspot",
+      "description": "Click on the image below to set the precise click point for your cursor. This is where the cursor registers clicks.",
+      "coordinates": "Hotspot: X={{x}}, Y={{y}}",
+      "custom": "Custom",
+      "default": "Center",
+      "resetToCenter": "Reset to Center",
+      "imageAlt": "Click to set hotspot",
+      "hint": "The red crosshair shows where clicks will be registered. Click anywhere on the image to adjust."
+    },
+    "metadata": {
+      "title": "Cursor Details",
+      "name": {
+        "label": "Cursor Name",
+        "placeholder": "e.g., My Custom Pointer",
+        "help": "Give your cursor a descriptive name"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "e.g., A sleek custom cursor for my store",
+        "help": "Optional description for your reference"
+      }
+    },
+    "buttons": {
+      "remove": "Remove",
+      "upload": "Upload Custom Cursor"
+    },
+    "preview": {
+      "title": "File Preview",
+      "titleBoth": "Preview Both Cursors",
+      "defaultLabel": "Default State",
+      "hoverLabel": "Hover State",
+      "altDefault": "Default cursor preview",
+      "altHover": "Hover cursor preview",
+      "hint": "This is how your cursor will appear (actual size may vary)",
+      "bothHint": "Left: Default cursor | Right: Hover cursor (on interactive elements)"
+    },
+    "requirements": {
+      "title": "File Requirements",
+      "types": "Formats: PNG, SVG, ICO, or CUR files",
+      "size": "Maximum size: 1MB per file",
+      "dimensions": "Recommended dimensions: 32x32px"
+    },
+    "validation": {
+      "noFile": "Please select a file to upload",
+      "invalidType": "Invalid file type. Please upload PNG, SVG, ICO, or CUR files only.",
+      "tooLarge": "File is too large. Maximum size is 1MB.",
+      "nameRequired": "Cursor name is required",
+      "defaultImageRequired": "Default cursor image is required"
+    }
+  },
   "toast": {
     "success": "Cursor published successfully",
     "reset": "Cursor reset to default",
     "error": "Failed to save cursor settings. Please try again.",
     "enableSuccess": "Custom cursor enabled",
-    "disableSuccess": "Custom cursor disabled"
+    "disableSuccess": "Custom cursor disabled",
+    "uploadSuccess": "Custom cursor uploaded successfully!",
+    "deleteSuccess": "Custom cursor deleted successfully",
+    "deleteSuccessActive": "Custom cursor deleted successfully. Active cursor has been reset."
   },
   "aria": {
     "saveButton": "Save and publish {{name}} cursor with size {{size}}px",
     "resetButton": "Reset all cursor settings to default values",
     "selectCursor": "Select {{name}} cursor{{status}}",
     "previewRegion": "Preview of {{name}} cursor at {{size}}px",
-    "previewEmpty": "Cursor preview - no cursor selected"
+    "previewEmpty": "Cursor preview - no cursor selected",
+    "deleteCursor": "Delete {{name}} cursor"
+  },
+  "delete": {
+    "modal": {
+      "title": "Delete Custom Cursor",
+      "message": "Are you sure you want to delete \"{{name}}\"?",
+      "warning": "This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
   }
 }
 
