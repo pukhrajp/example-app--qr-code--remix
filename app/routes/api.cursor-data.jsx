@@ -11,17 +11,91 @@ import { json } from "@remix-run/node";
  * @returns JSON with cursor settings or null if disabled/not found
  */
 
+/**
+ * Validates shop parameter format
+ * @param {string} shop - Shop domain to validate
+ * @returns {Object} { valid: boolean, error?: string }
+ */
+function validateShop(shop) {
+  // Check if shop parameter exists
+  if (!shop) {
+    return {
+      valid: false,
+      error: "Missing required parameter 'shop'",
+    };
+  }
+
+  // Check if shop is a string
+  if (typeof shop !== "string") {
+    return {
+      valid: false,
+      error: "Parameter 'shop' must be a string",
+    };
+  }
+
+  // Trim whitespace
+  shop = shop.trim();
+
+  // Check if shop is not empty after trimming
+  if (shop.length === 0) {
+    return {
+      valid: false,
+      error: "Parameter 'shop' cannot be empty",
+    };
+  }
+
+  // Validate shop format: should end with .myshopify.com
+  const shopRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
+  
+  if (!shopRegex.test(shop)) {
+    return {
+      valid: false,
+      error: "Invalid shop format. Expected format: 'your-store.myshopify.com'",
+    };
+  }
+
+  // Additional security: check for suspicious patterns
+  if (shop.includes("..") || shop.includes("//")) {
+    return {
+      valid: false,
+      error: "Invalid shop parameter",
+    };
+  }
+
+  return {
+    valid: true,
+    shop: shop.toLowerCase(), // Normalize to lowercase
+  };
+}
+
 export async function loader({ request }) {
   try {
     // Get shop parameter from URL
     const url = new URL(request.url);
-    const shop = url.searchParams.get("shop");
+    const shopParam = url.searchParams.get("shop");
 
-    // Basic response for now
+    // Validate shop parameter
+    const validation = validateShop(shopParam);
+    
+    if (!validation.valid) {
+      return json({
+        success: false,
+        error: validation.error,
+      }, {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    const shop = validation.shop;
+
+    // Basic response for now (will fetch from DB in next task)
     return json({
       success: true,
       shop: shop,
-      message: "Cursor API endpoint is working!",
+      message: "Shop parameter validated successfully",
       timestamp: new Date().toISOString(),
     }, {
       headers: {
