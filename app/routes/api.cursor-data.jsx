@@ -1,4 +1,5 @@
 import { json } from "@remix-run/node";
+import db from "../db.server";
 
 /**
  * API Endpoint: Cursor Data
@@ -91,12 +92,64 @@ export async function loader({ request }) {
 
     const shop = validation.shop;
 
-    // Basic response for now (will fetch from DB in next task)
+    // Fetch cursor settings from database
+    const cursorSettings = await db.cursorSettings.findUnique({
+      where: {
+        shop: shop,
+      },
+      include: {
+        cursor: true, // Include related cursor data
+      },
+    });
+
+    // If no settings found, return disabled state
+    if (!cursorSettings) {
+      return json({
+        isEnabled: false,
+        cursor: null,
+      }, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    // If cursor is disabled, return disabled state
+    if (!cursorSettings.isEnabled) {
+      return json({
+        isEnabled: false,
+        cursor: null,
+      }, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    // If no cursor is set (activeCursorId is null), return disabled state
+    if (!cursorSettings.cursor) {
+      return json({
+        isEnabled: false,
+        cursor: null,
+      }, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+
+    // Return enabled cursor with settings
     return json({
-      success: true,
-      shop: shop,
-      message: "Shop parameter validated successfully",
-      timestamp: new Date().toISOString(),
+      isEnabled: true,
+      cursor: {
+        id: cursorSettings.cursor.id,
+        name: cursorSettings.cursor.name,
+        imageUrl: cursorSettings.cursor.imageUrl,
+        hoverImageUrl: cursorSettings.cursor.hoverImageUrl,
+        hotspotX: cursorSettings.cursor.hotspotX,
+        hotspotY: cursorSettings.cursor.hotspotY,
+        size: cursorSettings.cursorSize,
+      },
     }, {
       headers: {
         "Content-Type": "application/json",
