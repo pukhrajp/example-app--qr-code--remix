@@ -1,0 +1,120 @@
+# Cursor AI Rules for Shopify Custom Cursor App
+
+## Code Quality Standards
+
+### General Principles
+- Keep code split into small, focused modules and components
+- Keep code refactored and DRY (Don't Repeat Yourself)
+- Follow ReactJS and Shopify best practices
+- Maintain Shopify app development standards
+- Write clean, readable, and maintainable code
+
+### React Best Practices
+- Use functional components with hooks
+- Keep components small and focused (< 300 lines)
+- Extract reusable logic into custom hooks
+- Use proper prop types and validation
+- Implement proper error boundaries
+- Follow React Context API patterns for global state
+
+### Shopify Standards
+- Follow Shopify Polaris design system guidelines
+- Use Shopify Polaris components wherever possible
+- Follow Remix routing conventions for Shopify apps
+- Implement proper authentication and session handling
+- Follow Shopify API versioning and deprecation guidelines
+- Use Shopify's recommended packages (@shopify/*)
+
+### Code Organization
+- Group related files in feature-based folders
+- Separate concerns: components, utilities, hooks, contexts
+- Use clear and descriptive file and function names
+- Keep route files focused on data loading and actions
+- Extract business logic into utility functions
+
+### Internationalization (i18n)
+- Use @shopify/i18next-shopify for translations
+- Keep all user-facing strings in translation files
+- Use proper namespace organization for translations
+- Support dynamic locale detection
+- Provide translations for all supported languages
+
+### Database & Backend
+- Use Prisma ORM best practices
+- Write efficient database queries
+- Handle errors gracefully with proper logging
+- Validate all input data
+- Use transactions where necessary
+- Follow proper data relationships and constraints
+
+### API Development
+- Validate all request parameters
+- Return consistent JSON response formats
+- Use proper HTTP status codes
+- Include CORS headers for public endpoints
+- Implement proper error handling and logging
+- Add caching headers where appropriate
+- Consider rate limiting for public APIs
+
+### Testing & Debugging
+- Test each feature incrementally before moving forward
+- Add proper error logging for debugging
+- Use meaningful error messages
+- Validate edge cases and error scenarios
+
+### Performance
+- Optimize database queries (use select, include wisely)
+- Implement proper caching strategies
+- Avoid unnecessary re-renders in React
+- Use lazy loading where appropriate
+- Optimize images and assets
+
+### Security
+- Validate and sanitize all user inputs
+- Follow Shopify's authentication patterns
+- Prevent SQL injection (use Prisma parameterized queries)
+- Implement proper CORS policies
+- Check for suspicious patterns in public APIs
+
+### Git & Version Control
+- Commit frequently with clear, descriptive messages
+- Push code after completing each task
+- Keep commits atomic and focused
+- Document major changes in commit messages
+
+### Documentation
+- Add clear comments for complex logic
+- Document public APIs and endpoints
+- Keep README files up to date
+- Document component props and usage
+- Create strategy documents for major features
+
+## Project-Specific Rules
+
+### Custom Cursor Feature
+- Always include both default and hover cursor states
+- Respect hotspot coordinates for cursor positioning
+- Handle cursor size scaling properly
+- Support mobile detection (disable on mobile if needed)
+- Validate cursor image formats and dimensions
+
+### Context Usage
+- Use CursorContext for global cursor state
+- Avoid prop drilling - use context for deeply nested props
+- Keep context providers at appropriate levels
+- Use context selectors to prevent unnecessary re-renders
+
+### File Upload
+- Validate file types and sizes
+- Convert images to data URLs for preview
+- Extract image dimensions before upload
+- Handle upload errors gracefully
+- Provide clear user feedback during upload
+
+### Storefront Integration
+- Follow Theme App Extension best practices
+- Use App Embed Blocks for easy merchant control
+- Implement proper CSS isolation
+- Handle conflicts with existing store themes
+- Test across different themes and browsers
+

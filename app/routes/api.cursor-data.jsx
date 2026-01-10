@@ -10,12 +10,83 @@ import db from "../db.server";
  * @route GET /api/cursor-data
  * @query shop - The shop domain (e.g., example.myshopify.com)
  * @returns JSON with cursor settings or null if disabled/not found
+ * 
+ * Response Format:
+ * {
+ *   isEnabled: boolean,
+ *   cursor: {
+ *     id: number,
+ *     name: string,
+ *     imageUrl: string,
+ *     hoverImageUrl: string,
+ *     hotspotX: number,
+ *     hotspotY: number,
+ *     size: number
+ *   } | null
+ * }
+ * 
+ * Error Response:
+ * {
+ *   success: false,
+ *   error: string,
+ *   code?: string
+ * }
  */
+
+/**
+ * CORS and Cache Headers for API responses
+ */
+const API_HEADERS = {
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*", // Allow all origins for public API
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Cache-Control": "public, max-age=300, stale-while-revalidate=60", // 5 min cache
+};
+
+/**
+ * Error codes for better client-side error handling
+ */
+const ERROR_CODES = {
+  MISSING_SHOP: "MISSING_SHOP",
+  INVALID_SHOP_FORMAT: "INVALID_SHOP_FORMAT",
+  INVALID_SHOP_PARAM: "INVALID_SHOP_PARAM",
+  DATABASE_ERROR: "DATABASE_ERROR",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+};
+
+/**
+ * Creates a standardized error response
+ */
+function createErrorResponse(error, code, status = 500) {
+  return json({
+    success: false,
+    error,
+    code,
+    timestamp: new Date().toISOString(),
+  }, {
+    status,
+    headers: API_HEADERS,
+  });
+}
+
+/**
+ * Creates a standardized success response
+ */
+function createSuccessResponse(data) {
+  return json({
+    success: true,
+    timestamp: new Date().toISOString(),
+    ...data,
+  }, {
+    headers: API_HEADERS,
+  });
+}
 
 /**
  * Validates shop parameter format
  * @param {string} shop - Shop domain to validate
- * @returns {Object} { valid: boolean, error?: string }
+ * @returns {Object} { valid: boolean, error?: string, code?: string, shop?: string }
  */
 function validateShop(shop) {
   // Check if shop parameter exists
@@ -23,6 +94,7 @@ function validateShop(shop) {
     return {
       valid: false,
       error: "Missing required parameter 'shop'",
+      code: ERROR_CODES.MISSING_SHOP,
     };
   }
 
@@ -31,6 +103,7 @@ function validateShop(shop) {
     return {
       valid: false,
       error: "Parameter 'shop' must be a string",
+      code: ERROR_CODES.INVALID_SHOP_PARAM,
     };
   }
 
@@ -42,6 +115,7 @@ function validateShop(shop) {
     return {
       valid: false,
       error: "Parameter 'shop' cannot be empty",
+      code: ERROR_CODES.MISSING_SHOP,
     };
   }
 
@@ -52,6 +126,7 @@ function validateShop(shop) {
     return {
       valid: false,
       error: "Invalid shop format. Expected format: 'your-store.myshopify.com'",
+      code: ERROR_CODES.INVALID_SHOP_FORMAT,
     };
   }
 
@@ -60,6 +135,7 @@ function validateShop(shop) {
     return {
       valid: false,
       error: "Invalid shop parameter",
+      code: ERROR_CODES.INVALID_SHOP_PARAM,
     };
   }
 
@@ -67,6 +143,16 @@ function validateShop(shop) {
     valid: true,
     shop: shop.toLowerCase(), // Normalize to lowercase
   };
+}
+
+/**
+ * Handle OPTIONS request for CORS preflight
+ */
+export async function options() {
+  return new Response(null, {
+    status: 204,
+    headers: API_HEADERS,
+  });
 }
 
 export async function loader({ request }) {
@@ -79,15 +165,11 @@ export async function loader({ request }) {
     const validation = validateShop(shopParam);
     
     if (!validation.valid) {
-      return json({
-        success: false,
-        error: validation.error,
-      }, {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return createErrorResponse(
+        validation.error,
+        validation.code,
+        400
+      );
     }
 
     const shop = validation.shop;
@@ -98,76 +180,92 @@ export async function loader({ request }) {
         shop: shop,
       },
       include: {
-        cursor: true, // Include related cursor data
+        activeCursor: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            hoverImageUrl: true,
+            hotspotX: true,
+            hotspotY: true,
+          },
+        },
       },
     });
 
     // If no settings found, return disabled state
     if (!cursorSettings) {
-      return json({
+      return createSuccessResponse({
         isEnabled: false,
         cursor: null,
-      }, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        message: "No cursor settings found for this shop",
       });
     }
 
     // If cursor is disabled, return disabled state
     if (!cursorSettings.isEnabled) {
-      return json({
+      return createSuccessResponse({
         isEnabled: false,
         cursor: null,
-      }, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        message: "Custom cursor is disabled",
       });
     }
 
     // If no cursor is set (activeCursorId is null), return disabled state
-    if (!cursorSettings.cursor) {
-      return json({
+    if (!cursorSettings.activeCursor) {
+      return createSuccessResponse({
         isEnabled: false,
         cursor: null,
-      }, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        message: "No active cursor selected",
       });
     }
 
+    // Parse settings JSON safely
+    let parsedSettings = { cursorSize: 100 }; // Default size
+    if (cursorSettings.settings) {
+      try {
+        parsedSettings = typeof cursorSettings.settings === 'string' 
+          ? JSON.parse(cursorSettings.settings) 
+          : cursorSettings.settings;
+      } catch (parseError) {
+        console.warn("Failed to parse cursor settings JSON:", parseError);
+      }
+    }
+
     // Return enabled cursor with settings
-    return json({
+    return createSuccessResponse({
       isEnabled: true,
       cursor: {
-        id: cursorSettings.cursor.id,
-        name: cursorSettings.cursor.name,
-        imageUrl: cursorSettings.cursor.imageUrl,
-        hoverImageUrl: cursorSettings.cursor.hoverImageUrl,
-        hotspotX: cursorSettings.cursor.hotspotX,
-        hotspotY: cursorSettings.cursor.hotspotY,
-        size: cursorSettings.cursorSize,
+        id: cursorSettings.activeCursor.id,
+        name: cursorSettings.activeCursor.name,
+        imageUrl: cursorSettings.activeCursor.imageUrl,
+        hoverImageUrl: cursorSettings.activeCursor.hoverImageUrl,
+        hotspotX: cursorSettings.activeCursor.hotspotX,
+        hotspotY: cursorSettings.activeCursor.hotspotY,
+        size: parsedSettings.cursorSize || 100,
       },
-    }, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      message: "Cursor data retrieved successfully",
     });
 
   } catch (error) {
-    console.error("Cursor API Error:", error);
-    
-    return json({
-      success: false,
-      error: "Internal server error",
-    }, {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-      },
+    // Log detailed error for debugging
+    console.error("Cursor API Error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString(),
     });
+    
+    // Check if it's a database error
+    const isDatabaseError = error.name?.includes('Prisma');
+    
+    return createErrorResponse(
+      isDatabaseError 
+        ? "Database error occurred. Please try again later."
+        : "Internal server error. Please try again later.",
+      isDatabaseError ? ERROR_CODES.DATABASE_ERROR : ERROR_CODES.INTERNAL_ERROR,
+      500
+    );
   }
 }
 
