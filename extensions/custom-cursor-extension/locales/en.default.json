@@ -1,0 +1,22 @@
+{
+  "custom_cursor": {
+    "name": "Custom Cursor",
+    "description": "Add custom cursor functionality to your storefront",
+    "settings": {
+      "enable_cursor": {
+        "label": "Enable Custom Cursor",
+        "info": "Toggle to enable or disable custom cursor on your storefront"
+      },
+      "disable_on_mobile": {
+        "label": "Disable on Mobile",
+        "info": "Disable custom cursor on mobile devices for better UX"
+      }
+    },
+    "messages": {
+      "loading": "Loading custom cursor...",
+      "enabled": "Custom cursor enabled",
+      "disabled": "Custom cursor disabled on mobile",
+      "error": "Failed to load custom cursor"
+    }
+  }
+}

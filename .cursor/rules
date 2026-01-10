@@ -9,6 +9,17 @@
 - Maintain Shopify app development standards
 - Write clean, readable, and maintainable code
 
+### Task Management for Development
+- **Divide work into small, testable, verifiable tasks**
+- Complete one task at a time before moving to the next
+- On each task completion:
+  * Provide a comprehensive summary of what was done
+  * Show test results and verification steps
+  * Ask for user approval before proceeding to next task
+- Each task should be independently testable
+- Tasks should have clear success criteria
+- Keep tasks focused (avoid combining multiple features in one task)
+
 ### React Best Practices
 - Use functional components with hooks
 - Keep components small and focused (< 300 lines)
