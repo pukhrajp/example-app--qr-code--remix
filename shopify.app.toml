@@ -5,6 +5,13 @@ name = "custom-cursor-app"
 application_url = "https://example.com"
 embedded = true
 
+[app_proxy]
+# The URL where proxy requests should be forwarded
+# During development, Shopify CLI will automatically replace this with the tunnel URL
+url = "https://example.com/apps/cursor-data"
+subpath = "cursor-data"
+prefix = "apps"
+
 [webhooks]
 api_version = "2026-01"
 

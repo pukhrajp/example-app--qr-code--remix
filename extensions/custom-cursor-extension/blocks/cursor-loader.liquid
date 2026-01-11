@@ -5,11 +5,12 @@
   It fetches cursor configuration from the app's API and injects CSS styles.
   
   Features:
+  - Loads external JavaScript modules (cursor-style-generator.js, cursor-loader.js)
   - Fetches cursor data from API endpoint
   - Injects custom cursor CSS
   - Supports default and hover cursor states
   - Respects merchant enable/disable settings
-  - Mobile-friendly (can be disabled on mobile)
+  - Mobile detection and smart disabling
   
   Learn more: https://shopify.dev/docs/apps/online-store/theme-app-extensions
 {% endcomment %}
@@ -26,94 +27,53 @@
 %}
 
 {% if enable_cursor %}
-  <div id="custom-cursor-app" data-shop="{{ shop_domain }}" data-disable-mobile="{{ disable_on_mobile }}">
-    {% comment %} Cursor styles and JavaScript will be injected here {% endcomment %}
-    
-    <script>
-      (function() {
-        'use strict';
-        
-        // Configuration
-        const shopDomain = '{{ shop_domain }}';
-        const disableOnMobile = {{ disable_on_mobile }};
-        
-        // Check if on mobile device
-        function isMobileDevice() {
-          return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-        
-        // Exit early if disabled on mobile
-        if (disableOnMobile && isMobileDevice()) {
-          console.log('[Custom Cursor] Disabled on mobile devices');
+  <div id="custom-cursor-app" 
+       data-shop="{{ shop_domain }}" 
+       data-disable-mobile="{{ disable_on_mobile }}"
+       data-cursor-loader-version="1.1.0">
+    {% comment %} Cursor functionality loaded via external JavaScript {% endcomment %}
+  </div>
+
+  {% comment %} Load external JavaScript modules {% endcomment %}
+  
+  {% comment %} 1. Load CSS Generator (must load first) {% endcomment %}
+  <script src="{{ 'cursor-style-generator.js' | asset_url }}" defer></script>
+  
+  {% comment %} 2. Load Cursor Loader (depends on CSS Generator) {% endcomment %}
+  <script src="{{ 'cursor-loader.js' | asset_url }}" defer></script>
+  
+  {% comment %} 3. Initialize cursor loader with configuration {% endcomment %}
+  <script>
+    (function() {
+      'use strict';
+      
+      // Configuration from Liquid
+      var config = {
+        shopDomain: '{{ shop_domain }}',
+        disableOnMobile: {{ disable_on_mobile | json }}
+      };
+      
+      // Wait for external scripts to load
+      function initializeCursor() {
+        // Check if dependencies are loaded
+        if (typeof window.CustomCursorLoader === 'undefined') {
+          console.warn('[Custom Cursor] Loader not yet available, retrying...');
+          setTimeout(initializeCursor, 100);
           return;
         }
         
-        // Fetch cursor data from API
-        const apiUrl = `/api/cursor-data?shop=${encodeURIComponent(shopDomain)}`;
-        
-        fetch(apiUrl)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then(data => {
-            // Check if cursor is enabled and data is valid
-            if (!data.success || !data.data || !data.data.isEnabled) {
-              console.log('[Custom Cursor] Cursor not enabled or no data available');
-              return;
-            }
-            
-            const cursorData = data.data;
-            
-            // Generate CSS for cursor (placeholder - will use cursorStyleGenerator in Phase 4)
-            if (cursorData.cursor) {
-              const cursor = cursorData.cursor;
-              const cssCode = `
-                /* Custom Cursor Styles */
-                :root {
-                  --cursor-size: ${cursor.size || 100};
-                }
-                
-                *, *::before, *::after {
-                  cursor: url('${cursor.imageUrl}') ${cursor.hotspotX || 0} ${cursor.hotspotY || 0}, auto !important;
-                }
-                
-                html, body {
-                  cursor: url('${cursor.imageUrl}') ${cursor.hotspotX || 0} ${cursor.hotspotY || 0}, auto !important;
-                }
-                
-                ${cursor.hoverImageUrl ? `
-                /* Hover state cursor */
-                a:hover,
-                button:hover,
-                [role="button"]:hover,
-                input[type="submit"]:hover,
-                input[type="button"]:hover,
-                select:hover,
-                .button:hover,
-                .btn:hover {
-                  cursor: url('${cursor.hoverImageUrl}') ${cursor.hotspotX || 0} ${cursor.hotspotY || 0}, auto !important;
-                }
-                ` : ''}
-              `;
-              
-              // Inject CSS into page
-              const styleElement = document.createElement('style');
-              styleElement.id = 'custom-cursor-styles';
-              styleElement.textContent = cssCode;
-              document.head.appendChild(styleElement);
-              
-              console.log('[Custom Cursor] Cursor styles applied successfully');
-            }
-          })
-          .catch(error => {
-            console.error('[Custom Cursor] Failed to load cursor:', error);
-          });
-      })();
-    </script>
-  </div>
+        // Initialize cursor with configuration
+        window.CustomCursorLoader.init(config);
+      }
+      
+      // Start initialization when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeCursor);
+      } else {
+        initializeCursor();
+      }
+    })();
+  </script>
 {% else %}
   {% comment %} Cursor is disabled - render nothing {% endcomment %}
 {% endif %}
@@ -133,13 +93,13 @@
     {
       "type": "checkbox",
       "id": "disable_on_mobile",
-      "label": "Disable on Mobile",
+      "label": "Disable on Mobile Devices",
       "default": true,
-      "info": "Disable custom cursor on mobile devices for better UX"
+      "info": "Automatically disable custom cursor on mobile and tablet devices for better user experience"
     },
     {
       "type": "paragraph",
-      "content": "Manage your custom cursor settings in the app dashboard. Changes will be reflected automatically on your storefront."
+      "content": "Manage your custom cursor from the app admin panel. Select different cursor styles, adjust size, and control hover effects. Changes sync automatically with your storefront."
     }
   ]
 }

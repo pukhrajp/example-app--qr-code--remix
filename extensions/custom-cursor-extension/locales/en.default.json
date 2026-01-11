@@ -1,22 +1,16 @@
 {
-  "custom_cursor": {
-    "name": "Custom Cursor",
-    "description": "Add custom cursor functionality to your storefront",
+  "tcustom_cursor": {
+    "name": "Kaching Custom Cursor",
     "settings": {
       "enable_cursor": {
         "label": "Enable Custom Cursor",
         "info": "Toggle to enable or disable custom cursor on your storefront"
       },
       "disable_on_mobile": {
-        "label": "Disable on Mobile",
-        "info": "Disable custom cursor on mobile devices for better UX"
-      }
-    },
-    "messages": {
-      "loading": "Loading custom cursor...",
-      "enabled": "Custom cursor enabled",
-      "disabled": "Custom cursor disabled on mobile",
-      "error": "Failed to load custom cursor"
+        "label": "Disable on Mobile Devices",
+        "info": "Automatically disable custom cursor on mobile and tablet devices for better user experience"
+      },
+      "info_paragraph": "Manage your custom cursor from the app admin panel. Select different cursor styles, adjust size, and control hover effects. Changes sync automatically with your storefront."
     }
   }
 }

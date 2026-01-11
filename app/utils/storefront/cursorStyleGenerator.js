@@ -216,14 +216,33 @@ select:hover,
   --cursor-size-multiplier: ${sizeMultiplier};
 }
 
-/* Apply custom cursor to all elements */
+/* Apply custom cursor to html and body first (highest priority) */
+html {
+  cursor: ${cursorValue} !important;
+  min-height: 100vh;
+}
+
+body {
+  cursor: ${cursorValue} !important;
+  min-height: 100vh;
+}
+
+/* Apply custom cursor to all elements including pseudo-elements */
 *, *::before, *::after {
   cursor: ${cursorValue} !important;
 }
 
-/* Ensure cursor applies to body and html */
-html, body {
+/* Ensure cursor shows on all viewport areas including margins */
+html::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
   cursor: ${cursorValue} !important;
+  z-index: -9999;
 }${hoverStateCSS}
 `.trim();
 
